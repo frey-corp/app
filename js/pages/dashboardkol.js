@@ -99,41 +99,57 @@ async function loadDashboard() {
 function generateKPI(data) {
 
   let totalDeal = 0;
-  let admin1 = 0;
-  let admin2 = 0;
   let kolFee = 0;
   let agencyFee = 0;
 
+  let onProgress = 0;
+  let finish = 0;
+
   data.forEach(d => {
+    const admin1 = Number(d.admin_fee || 0);
+    const admin2 = Number(d.admin_fee_2 || 0);
+    const agency = Number(d.agency_fee || 0);
+    const iuFee = Number(d.iu_fee || 0); // column baru
+
     totalDeal += Number(d.amount_dealing || 0);
-    admin1 += Number(d.admin_fee || 0);
-    admin2 += Number(d.admin_fee_2 || 0);
     kolFee += Number(d.kol_fee || 0);
-    agencyFee += Number(d.agency_fee || 0);
+
+    // gabungan agency fee
+    agencyFee += admin1 + admin2 + agency + iuFee;
+
+    // status count
+    if (d.status === "ON_PROGRESS") onProgress++;
+    if (d.status === "FINISH") finish++;
   });
 
-  const totalAdmin = admin1 + admin2;
+  const totalDealsCount = data.length;
+
+  const conversionRate = totalDealsCount
+    ? (finish / totalDealsCount) * 100
+    : 0;
 
   const container = document.getElementById("kpiContainer");
   if (!container) return;
 
   container.innerHTML = `
     ${card("Total Deal", totalDeal)}
-    ${card("Admin Fee 1", admin1)}
-    ${card("Admin Fee 2", admin2)}
-    ${card("Total Admin", totalAdmin)}
-    ${card("Total KOL Fee", kolFee)}
-    ${card("Total Agency Fee", agencyFee)}
+    ${card("Total Net KOL Fee", kolFee)}
+    ${card("Total Net Agency Fee", agencyFee)}
+    ${card("Total On Progress", onProgress, false)}
+    ${card("Total Finish", finish, false)}
+    ${card("Conversion Rate", conversionRate.toFixed(1) + "%", false)}
   `;
 }
 
-function card(title, value) {
+function card(title, value, isCurrency = true) {
   return `
     <div class="col-6 mb-3">
       <div class="card shadow-sm">
         <div class="card-body">
           <small>${title}</small>
-          <h5 class="fw-bold">Rp ${format(value)}</h5>
+          <h5 class="fw-bold">
+            ${isCurrency ? "Rp " + format(value) : value}
+          </h5>
         </div>
       </div>
     </div>
