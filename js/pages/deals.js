@@ -175,8 +175,8 @@ async function loadMaster() {
   const { data: brands, error } = await supabase
   .from("brands")
   .select("*")
-  .eq("is_active", 1);
-
+  .eq("is_active", 1)
+  .order("brand_name", { ascending: true });
 
   $("#brandSelect").empty().append(`<option value=""></option>`);
   brands.forEach(b => {
@@ -256,6 +256,7 @@ function loadDeals() {
           `type_promote.ilike.${search}`,
           `brief_sow.ilike.${search}`,
           `content_link.ilike.${search}`,
+          `insight_link.ilike.${search}`,
           `brand_name.ilike.${search}`,
           `kol_name.ilike.${search}`,
           `admin_name.ilike.${search}`
@@ -290,10 +291,11 @@ function loadDeals() {
           10: "kol_fee",
           11: "brief_sow",
           12: "content_link",
-          13: "transfer_date",
-          14: "status",
-          15: "type_promote",
-          16: "notes"
+          13: "insight_link",
+          14: "transfer_date",
+          15: "status",
+          16: "type_promote",
+          17: "notes"
         };
 
         if (columnMap[orderColIndex]) {
@@ -329,6 +331,7 @@ function loadDeals() {
           d.kol_fee != null ? "Rp " + formatNumber(d.kol_fee) : "-",
           d.brief_sow || "",
           d.content_link || "",
+          d.insight_link || "",
           d.transfer_date || "",
           d.status,
           d.type_promote,
@@ -415,6 +418,7 @@ function registerEvents() {
       kol_fee: type === "PAID" ? parseNumber($("#kolFee").val()) : null,
       brief_sow: $("#briefSow").val() || null,
       content_link: $("#contentLink").val() || null,
+      insight_link: $("#insightLink").val() || null,
       transfer_date: $("#transferDate").val() || null,
       status: $("#statusSelect").val()
     };
@@ -478,6 +482,7 @@ function registerEvents() {
       $("#kolFee").val(formatNumber(data.kol_fee));
       $("#briefSow").val(data.brief_sow);
       $("#contentLink").val(data.content_link);
+      $("#insightLink").val(data.insight_link);
       $("#transferDate").val(data.transfer_date);
       $("#statusSelect").val(data.status);
 
