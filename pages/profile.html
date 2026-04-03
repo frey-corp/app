@@ -1,0 +1,77 @@
+<div class="container mt-4">
+  <h3>Profile</h3>
+
+  <form id="profileForm" class="mb-4">
+    <input type="hidden" id="userId">
+    
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" id="username" class="form-control" disabled>
+    </div>
+
+    <div class="mb-3">
+      <label for="fullName" class="form-label">Full Name</label>
+      <input type="text" id="fullName" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="alamat" class="form-label">Alamat</label>
+      <textarea id="alamat" class="form-control" rows="2"></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="instagram" class="form-label">Instagram</label>
+      <input type="text" id="instagram" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="tiktok" class="form-label">TikTok</label>
+      <input type="text" id="tiktok" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="whatsapp" class="form-label">WhatsApp</label>
+      <input type="text" id="whatsapp" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="bankName" class="form-label">Bank Name</label>
+      <input type="text" id="bankName" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="bankAccount" class="form-label">Bank Account Number</label>
+      <input type="text" id="bankAccount" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update Profile</button>
+  </form>
+
+  <hr>
+
+  <h4>Change Password</h4>
+  <form id="passwordForm">
+        <div class="mb-3">
+            <label for="oldPassword" class="form-label">Old Password</label>
+            <input type="password" id="oldPassword" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="newPassword" class="form-label">New Password</label>
+            <input type="password" id="newPassword" class="form-control" required>
+        </div>
+
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="showPassword">
+            <label class="form-check-label" for="showPassword">Show Password</label>
+        </div>
+
+        <button type="submit" class="btn btn-warning">Change Password</button>
+    </form>
+
+    <hr>
+    <div class="text-end">
+        <button id="btnlogout" class="btn btn-danger" type="button">Logout</button>
+    </div>
+
+</div>

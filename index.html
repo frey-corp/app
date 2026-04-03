@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Frey Corp</title>
+    <link rel="icon" href="logofreycorp.jpeg">
+
+    <!-- ================= CSS ================= -->
+
+    <!-- Bootstrap -->
+    <link href="vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="vendor/bootstrap/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Select2 -->
+    <link href="vendor/select2/select2.min.css" rel="stylesheet"/>
+
+    <!-- DataTables -->
+    <link href="vendor/datatables/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="vendor/datatables/responsive.bootstrap5.min.css" rel="stylesheet">
+    <link href="vendor/datatables/buttons.bootstrap5.min.css" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <link href="vendor/sweetalert2/sweetalert2.min.css" rel="stylesheet">
+
+    <!-- Font -->
+    <link href="vendor/font/montserrat.css" rel="stylesheet">
+
+    <!-- Custom -->
+    <link href="style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Semua page akan dimuat di sini -->
+    <div id="app"></div>
+
+    <!-- ================= JS (URUTAN PENTING!) ================= -->
+
+    <!-- 1. jQuery (WAJIB PALING AWAL) -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+
+    <!-- 2. Bootstrap -->
+    <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+
+    <!-- 3. Select2 -->
+    <script src="vendor/select2/select2.min.js"></script>
+
+    <!-- 4. DataTables Core -->
+    <script src="vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="vendor/datatables/dataTables.bootstrap5.min.js"></script>
+
+    <!-- 5. DataTables Extensions -->
+    <script src="vendor/datatables/dataTables.responsive.min.js"></script>
+    <script src="vendor/datatables/responsive.bootstrap5.min.js"></script>
+
+    <!-- 6. Export (WAJIB SEBELUM buttons.html5) -->
+    <script src="vendor/jszip/jszip.min.js"></script>
+
+    <!-- 7. DataTables Buttons -->
+    <script src="vendor/datatables/dataTables.buttons.min.js"></script>
+    <script src="vendor/datatables/buttons.bootstrap5.min.js"></script>
+    <script src="vendor/datatables/buttons.html5.min.js"></script>
+
+    <!-- 8. SweetAlert -->
+    <script src="vendor/sweetalert2/sweetalert2.all.min.js"></script>
+
+    <!-- 9. jsPDF -->
+    <script src="vendor/jspdf/jspdf.umd.min.js"></script>
+
+    <!-- 10. Highcharts -->
+    <script src="vendor/highcharts/highcharts.js"></script>
+    <script>
+        const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function loadTheme(isDark) {
+            const existing = document.getElementById('highcharts-theme');
+            if (existing) existing.remove();
+
+            if (isDark) {
+            const script = document.createElement('script');
+            script.src = 'vendor/highcharts/dark-unica.js';
+            script.id = 'highcharts-theme';
+            document.head.appendChild(script);
+            }
+        }
+
+        // load pertama
+        loadTheme(darkModeQuery.matches);
+
+        // listen perubahan
+        darkModeQuery.addEventListener('change', e => {
+            loadTheme(e.matches);
+        });
+    </script>
+
+    <!-- 11. html2pdf -->
+    <script src="vendor/html2pdf/html2pdf.bundle.min.js"></script>
+
+    <!-- 12. App (MODULE PALING AKHIR) -->
+    <script type="module" src="./js/app.js"></script>
+
+</body>
+</html>

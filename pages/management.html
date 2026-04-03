@@ -1,0 +1,61 @@
+<!-- ================= DASHBOARD ================= -->
+<div class="container-fluid mt-4 d-none" id="dashboard">
+    <h3 id="welcomeText">Welcome</h3>
+    <!-- FILTER -->
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3">
+            <label class="form-label">Date From</label>
+            <input type="date" id="filterDateFrom" class="form-control">
+        </div>
+
+        <div class="col-6 col-md-3">
+            <label class="form-label">Date To</label>
+            <input type="date" id="filterDateTo" class="form-control">
+        </div>
+
+        <div class="col-6 col-md-3">
+            <label class="form-label">Admin</label>
+            <select id="filterKOL" class="form-select">
+                <option value="">ALL</option>
+            </select>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <label class="form-label">Status</label>
+            <select id="filterStatus" class="form-select">
+                <option value="ON_PROGRESS" selected>On Progress</option>
+                <option value="FINISH">Finish</option>
+                <option value="">ALL</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-responsive p-0">
+        <table id="dealsTable" class="table table-striped table-bordered align-middle tblfixed">
+            <thead class="table-dark">
+                <tr>
+                    <th>Deal Date</th>
+                    <th>Brand</th>
+                    <th>Admin</th>
+                    <th>KOL</th>
+                    <th>Job Desc (SOW)</th>
+                    <th>Deadline</th>
+                    <th>Amount</th>
+                    <th>Admin Fee</th>
+                    <th>Admin Fee 2</th>
+                    <th>Agency Fee</th>
+                    <th>KOL Fee</th>
+                    <th>Brief</th>
+                    <th>Content Link</th>
+                    <th>Transfer Date</th>
+                    <th>Status</th>
+                    <th>Type</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>

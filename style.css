@@ -1,0 +1,323 @@
+/* ================================
+   GLOBAL FONT SIZE
+================================ */
+body {
+    font-size: 0.9rem;
+}
+
+label,
+.form-label {
+    font-size: 0.85rem;
+}
+
+.form-control,
+.form-select {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.5rem;
+}
+
+/* height fix hanya untuk input & select */
+input.form-control,
+select.form-select {
+    height: 32px;
+}
+
+
+/* ================================
+   FORM FIX MOBILE 2 KOLOM
+================================ */
+.form-control,
+.form-select {
+    width: 100%;
+    min-width: 0 !important;
+}
+
+
+/* ================================
+   SELECT2 FIX (BIAR SAMA UKURAN)
+================================ */
+.select2-container {
+    width: 100% !important;
+    font-size: 0.85rem;
+}
+
+.select2-container--default .select2-selection--single {
+    height: 32px;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+
+.select2-container--default
+.select2-selection--single
+.select2-selection__rendered {
+    line-height: 24px;
+    padding-left: 0;
+    font-size: 0.85rem;
+}
+
+.select2-container--default
+.select2-selection--single
+.select2-selection__arrow {
+    height: 32px;
+}
+
+.select2-dropdown {
+    font-size: 0.85rem;
+}
+
+/* ================================
+   SELECT2 KHUSUS DALAM MODAL
+================================ */
+.modal .select2-container {
+  z-index: 1056 !important;
+}
+
+.modal .select2-dropdown {
+  z-index: 1056 !important;
+}
+
+
+/* ================================
+   DATATABLE STYLE
+================================ */
+table.dataTable {
+    font-size: 0.85rem;
+}
+
+table.dataTable thead th {
+    white-space: nowrap;
+}
+
+table.dataTable tbody td {
+    vertical-align: middle;
+}
+
+
+/* Hover table */
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+
+/* ================================
+   DATATABLE SEARCH, LENGTH, PAGINATION
+   (SAMA UKURAN DENGAN TABLE)
+================================ */
+.dataTables_wrapper,
+.dataTables_wrapper label,
+.dataTables_wrapper input,
+.dataTables_wrapper select {
+    font-size: 0.85rem;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    height: 30px;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.85rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.85rem;
+}
+
+.dataTables_wrapper .dataTables_info {
+    font-size: 0.85rem;
+}
+
+
+/* ================================
+   RESPONSIVE DATATABLE CHILD ROW
+================================ */
+table.dataTable.dtr-inline.collapsed
+> tbody
+> tr
+> td.dtr-control:before {
+    background-color: #0d6efd;
+}
+
+
+/* ================================
+   MOBILE OPTIMIZATION
+================================ */
+@media (max-width: 575.98px) {
+
+    body {
+        font-size: 0.75rem;
+    }
+
+    .form-label {
+        font-size: 0.7rem;
+        margin-bottom: 2px;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.35rem;
+    }
+
+
+    /* height fix hanya untuk input & select */
+    input.form-control,
+    select.form-select {
+        height: 28px;
+    }
+
+    /* Select2 Mobile */
+    .select2-container,
+    .select2-dropdown {
+        font-size: 0.75rem;
+    }
+
+    .select2-container--default
+    .select2-selection--single {
+        height: 28px;
+    }
+
+    .select2-container--default
+    .select2-selection__arrow {
+        height: 28px;
+    }
+
+    /* Button */
+    .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.45rem;
+    }
+
+    /* Table */
+    table.dataTable {
+        font-size: 0.75rem;
+    }
+
+    .dataTables_wrapper * {
+        font-size: 0.75rem;
+    }
+
+    /* Card */
+    .card-body {
+        padding: 0.5rem;
+    }
+
+    /* Filter spacing */
+    .row.g-2 {
+        --bs-gutter-x: 0.4rem;
+        --bs-gutter-y: 0.4rem;
+    }
+}
+
+
+/* ================================
+   TABLE NUMBER COLUMN
+================================ */
+.table-number {
+    width: 40px;
+    text-align: center;
+}
+
+
+/* ================================
+   CARD & CONTAINER
+================================ */
+.card {
+    border-radius: 8px;
+}
+
+.card-header {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.card-body {
+    padding: 0.75rem;
+}
+
+
+/* ================================
+   SCROLL TABLE MOBILE
+================================ */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive {
+    max-height: 450px;
+    overflow-y: auto;
+    overflow-x: auto;
+    position: relative;
+}
+
+/* Sticky Header */
+.tblfixed thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 5;
+    background-color: #212529; /* sama seperti table-dark */
+    color: white;
+}
+
+/* =========================
+   BOTTOM NAVBAR
+========================= */
+
+.bottom-navbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  height: 65px;
+  background: #ffffff;
+
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.08);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+
+  z-index: 1000;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  outline: none;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 11px;
+  color: #6c757d;
+
+  transition: all 0.2s ease;
+}
+
+.nav-item i {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.nav-item.active {
+  color: #0d6efd;
+}
+
+.nav-item.active i {
+  transform: scale(1.1);
+}
+
+.nav-item.logout {
+  color: #dc3545;
+}
+
+/* Biar konten tidak ketutup navbar */
+#app {
+  padding-bottom: 80px;
+}

@@ -1,0 +1,63 @@
+<div class="container mt-4">
+
+  <h3>Mapping Admin → KOL</h3>
+
+  <div class="card-body table-responsive p-0">
+    <table class="table table-bordered table-striped tblfixed" id="mappingTable" width="100%">
+      <thead class="table-dark">
+        <tr>
+          <th>No</th>
+          <th>Admin</th>
+          <th>Jumlah KOL</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+</div>
+
+
+<!-- =========================
+     MODAL MAPPING
+========================= -->
+<div class="modal fade" id="mappingModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <form id="mappingForm">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Mapping KOL</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <input type="hidden" id="mappingAdminId">
+
+          <div class="mb-3">
+            <label class="form-label">Admin</label>
+            <input type="text" id="mappingAdminName" class="form-control" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">KOL</label>
+            <select id="mappingKOL" class="form-select" multiple style="width:100%">
+              <!-- load via JS -->
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Mapping</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>

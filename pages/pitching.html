@@ -1,0 +1,110 @@
+<div class="container mt-4">
+
+  <h4 class="mb-3">Laporan Pitching Brand</h4>
+
+  <!-- FILTER -->
+  <div class="row mb-3">
+
+    <div class="col-6">
+        <label>From</label>
+        <input type="date" id="filterFrom" class="form-control">
+    </div>
+
+    <div class="col-6">
+        <label>To</label>
+        <input type="date" id="filterTo" class="form-control">
+    </div>
+
+    </div>
+
+    <div class="row mb-3">
+
+    <div class="col-md-6">
+        <label>Filter KOL</label>
+        <select id="filterKOL" class="form-select">
+        <option value="">All KOL</option>
+        </select>
+    </div>
+
+  </div>
+
+
+  <!-- ACTION -->
+  <div class="mb-3 text-end">
+    <button id="btnAdd" class="btn btn-primary">
+      + Tambah Pitching
+    </button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table id="pitchingTable" class="table table-striped table-bordered align-middle tblfixed">
+        <thead class="table-dark">
+            <tr>
+            <th>Date</th>
+            <th>Brand</th>
+            <th>KOL</th>
+            <th>Markom</th>
+            <th>Phone</th>
+            <th>Action</th>
+            </tr>
+        </thead>
+    </table>
+
+  </div>
+
+</div>
+
+
+<!-- ================= MODAL INSERT / EDIT ================= -->
+<div class="modal fade" id="pitchingModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Form Pitching</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <form id="pitchingForm">
+
+          <input type="hidden" id="pitchingId">
+
+          <div class="mb-3">
+            <label>Tanggal Pitching</label>
+            <input type="date" id="pitchingDate" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label>Brand</label>
+            <select id="brandSelect" class="form-select" required></select>
+          </div>
+
+          <div class="mb-3">
+            <label>KOL</label>
+            <select id="kolSelect" class="form-select" required></select>
+          </div>
+
+          <div class="mb-3">
+            <label>Nama Markom</label>
+            <input type="text" id="markomName" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label>No. HP</label>
+            <input type="text" id="markomPhone" class="form-control" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            Simpan
+          </button>
+
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+</div>
