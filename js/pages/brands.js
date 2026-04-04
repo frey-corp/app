@@ -35,6 +35,7 @@ function initDataTable() {
   brandTable = $("#brandTable").DataTable({
     processing: true,
     serverSide: true,
+    responsive: true,
     searching: true,
     ordering: true,
     pageLength: 25,
@@ -78,7 +79,9 @@ function initDataTable() {
         // Kolom: 0 = No, 1 = brand_name, 2 = status, 3 = actions
         const columnMap = {
           1: "brand_name",
-          2: "is_active"
+          2: "brand_addres",
+          3: "brand_pic",
+          4: "is_active"
         };
 
         if (columnMap[orderColIndex]) {
@@ -103,6 +106,8 @@ function initDataTable() {
         data: brands.map((b, i) => [
           start + i + 1,
           b.brand_name,
+          b.brand_addres,
+          b.brand_pic,
           b.is_active == 1
             ? `<span class="badge bg-success">Active</span>`
             : `<span class="badge bg-secondary">Inactive</span>`,
@@ -110,6 +115,8 @@ function initDataTable() {
             <button class="btn btn-sm btn-warning editBrandBtn"
               data-id="${b.id}"
               data-name="${b.brand_name}"
+              data-addres="${b.brand_addres}"
+              data-pic="${b.brand_pic}"
               data-status="${b.is_active}">
               Edit
             </button>
@@ -130,6 +137,8 @@ function openAddModal() {
   document.getElementById("modalTitle").innerText = "Add Brand";
   document.getElementById("brandId").value = "";
   document.getElementById("brandName").value = "";
+  document.getElementById("brandAddress").value = "";
+  document.getElementById("brandPIC").value = "";
   document.getElementById("brandStatus").value = "1"; // default active
 
   brandModal.show();
@@ -139,11 +148,15 @@ function openEditModal() {
 
   const id = $(this).data("id");
   const name = $(this).data("name");
+  const addres = $(this).data("addres");
+  const pic = $(this).data("pic");
   const status = $(this).data("status");
 
   document.getElementById("modalTitle").innerText = "Edit Brand";
   document.getElementById("brandId").value = id;
   document.getElementById("brandName").value = name;
+  document.getElementById("brandAddress").value = addres;
+  document.getElementById("brandPIC").value = pic;
   document.getElementById("brandStatus").value = status;
 
   brandModal.show();
@@ -159,6 +172,8 @@ async function saveBrand(e) {
 
   const id = document.getElementById("brandId").value;
   const name = document.getElementById("brandName").value.trim();
+  const addres = document.getElementById("brandAddress").value.trim();
+  const pic = document.getElementById("brandPIC").value.trim();
   const status = parseInt(document.getElementById("brandStatus").value);
 
   if (!name) {
@@ -184,6 +199,8 @@ async function saveBrand(e) {
       .from("brands")
       .update({
         brand_name: name,
+        brand_addres: addres,
+        brand_pic: pic,
         is_active: status
       })
       .eq("id", id);
@@ -192,7 +209,9 @@ async function saveBrand(e) {
       .from("brands")
       .insert([{
         brand_name: name,
-        is_active: 1 // default active
+        brand_addres: addres,
+        brand_pic: pic,
+        is_active: status
       }]);
   }
 
