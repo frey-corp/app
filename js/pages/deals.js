@@ -16,8 +16,6 @@ export async function init() {
   $("#welcomeText").text(`Welcome, ${currentUser.full_name}`);
   $("#dashboard").removeClass("d-none");
 
-  $("input[name='typePromote']").on("change", handleTypePromote);
-
   $("#filterDateFrom, #filterDateTo, #filterKOL, #filterStatus")
   .off("change")
   .on("change", function () {
@@ -68,40 +66,6 @@ function handleTypePromote() {
     $("#kolFee").val("");
   }
 }
-
-$("#amountDealing").on("input", function () {
-  let value = $(this).val().replace(/\./g, "");
-
-  if (!value) {
-    $(this).val("");
-    $("#adminFee").val("");
-    $("#agencyFee").val("");
-    calculateKolFee();
-    return;
-  }
-
-  let amount = parseInt(value);
-
-  // Auto isi default
-  $("#adminFee").val(formatNumber(amount * 0.15));
-  $("#agencyFee").val(formatNumber(amount * 0.05));
-  $(this).val(formatNumber(amount));
-
-  calculateKolFee();
-});
-
-// Semua field trigger ulang
-$("#adminFee, #agencyFee, #adminFee2, #iuFee").on("input", function () {
-  let value = $(this).val().replace(/\./g, "");
-
-  if (!value) {
-    $(this).val("");
-  } else {
-    $(this).val(formatNumber(parseInt(value)));
-  }
-
-  calculateKolFee();
-});
 
 // =========================
 // KOL FEE CALCULATION
@@ -353,10 +317,10 @@ function loadDeals() {
           //   </button>
           // `
           `
-            <button class="btn btn-sm btn-primary editDealBtn"
-              data-id="${d.id}">
-              Edit
-            </button>
+              <button class="btn btn-sm btn-primary editDealBtn"
+                data-id="${d.id}">
+                Edit
+              </button>
             <button class="btn btn-sm btn-secondary printInvoiceBtn"
               data-id="${d.id}">
               Print
@@ -392,10 +356,64 @@ function registerEvents() {
       .prop("checked", true);
 
     handleTypePromote();
+    calculateKolFee(); 
 
     dealModal.show();
   });
 
+  // =========================
+  // TYPE PROMOTE
+  // =========================
+  $(document)
+    .off("change", "input[name='typePromote']")
+    .on("change", "input[name='typePromote']", function () {
+      handleTypePromote();
+      calculateKolFee();
+    });
+
+  // =========================
+  // AMOUNT DEALING
+  // =========================
+  $(document)
+    .off("input", "#amountDealing")
+    .on("input", "#amountDealing", function () {
+
+      let value = $(this).val().replace(/\./g, "");
+
+      if (!value) {
+        $(this).val("");
+        $("#adminFee").val("");
+        $("#agencyFee").val("");
+        calculateKolFee();
+        return;
+      }
+
+      let amount = parseInt(value);
+
+      $("#adminFee").val(formatNumber(amount * 0.15));
+      $("#agencyFee").val(formatNumber(amount * 0.05));
+      $(this).val(formatNumber(amount));
+
+      calculateKolFee();
+    });
+
+  // =========================
+  // FEE INPUTS
+  // =========================
+  $(document)
+    .off("input", "#adminFee, #agencyFee, #adminFee2, #iuFee")
+    .on("input", "#adminFee, #agencyFee, #adminFee2, #iuFee", function () {
+
+      let value = $(this).val().replace(/\./g, "");
+
+      if (!value) {
+        $(this).val("");
+      } else {
+        $(this).val(formatNumber(parseInt(value)));
+      }
+
+      calculateKolFee();
+    });
 
   // =========================
   // SAVE DEAL
@@ -458,7 +476,6 @@ function registerEvents() {
     loadDeals();
   });
 
-
   // =========================
   // EDIT DEAL
   // =========================
@@ -494,6 +511,9 @@ function registerEvents() {
       $("#adminFee2").val(formatNumber(data.admin_fee_2));
       $("#agencyFee").val(formatNumber(data.agency_fee));
       $("#kolFee").val(formatNumber(data.kol_fee));
+
+      calculateKolFee();
+
       $("#briefSow").val(data.brief_sow);
       $("#contentLink").val(data.content_link);
       $("#insightLink").val(data.insight_link);
@@ -503,7 +523,6 @@ function registerEvents() {
       dealModal.show();
     });
 }
-
 
 // =========================
 // PRINT INVOICE (SEMUA STATUS)
