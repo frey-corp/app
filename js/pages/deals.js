@@ -336,13 +336,27 @@ function loadDeals() {
           d.status,
           d.type_promote,
           d.notes || "",
+          // `
+          //   ${d.status === "ON_PROGRESS" ? `
+          //     <button class="btn btn-sm btn-primary editDealBtn"
+          //       data-id="${d.id}">
+          //       Edit
+          //     </button>
+          //   ` : ""}
+          //   <button class="btn btn-sm btn-secondary printInvoiceBtn"
+          //     data-id="${d.id}">
+          //     Print
+          //   </button>
+          //   <button class="btn btn-sm btn-warning copyAlamat"
+          //     data-alamat="${d.kol_alamat || ''}">
+          //     Alamat KOL
+          //   </button>
+          // `
           `
-            ${d.status === "ON_PROGRESS" ? `
-              <button class="btn btn-sm btn-primary editDealBtn"
-                data-id="${d.id}">
-                Edit
-              </button>
-            ` : ""}
+            <button class="btn btn-sm btn-primary editDealBtn"
+              data-id="${d.id}">
+              Edit
+            </button>
             <button class="btn btn-sm btn-secondary printInvoiceBtn"
               data-id="${d.id}">
               Print
