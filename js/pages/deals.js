@@ -95,12 +95,12 @@ function calculateKolFee() {
   const admin1 = adminInput === "" ? 0 : parseNumber(adminInput);
   const agency = agencyInput === "" ? 0 : parseNumber(agencyInput);
 
-  console.log("amount", amount);
-  console.log("admin1", admin1);
-  console.log("admin2", admin2);
-  console.log("agency", agency);
-  console.log("iuFee", iuFee);
-  console.log("==============================");
+  // console.log("amount", amount);
+  // console.log("admin1", admin1);
+  // console.log("admin2", admin2);
+  // console.log("agency", agency);
+  // console.log("iuFee", iuFee);
+  // console.log("==============================");
 
   const kol = amount - admin1 - admin2 - agency - iuFee;
 
@@ -292,11 +292,11 @@ function loadDeals() {
           d.job_description || "",
           d.deadline || "",
           d.type_promote === "PAID" ? "Rp " + formatNumber(d.amount_dealing) : "-",
-          d.iu_fee != null ? "Rp " + formatNumber(d.iu_fee) : "-",
-          d.admin_fee != null ? "Rp " + formatNumber(d.admin_fee) : "-",
-          d.admin_fee_2 != null ? "Rp " + formatNumber(d.admin_fee_2) : "-",
-          d.agency_fee != null ? "Rp " + formatNumber(d.agency_fee) : "-",
-          d.kol_fee != null ? "Rp " + formatNumber(d.kol_fee) : "-",
+          d.iu_fee != null && d.iu_fee != 0 ? "Rp " + formatNumber(d.iu_fee) : "-",
+          d.admin_fee != null && d.admin_fee != 0 ? "Rp " + formatNumber(d.admin_fee) : "-",
+          d.admin_fee_2 != null && d.admin_fee_2 != 0 ? "Rp " + formatNumber(d.admin_fee_2) : "-",
+          d.agency_fee != null && d.agency_fee != 0 ? "Rp " + formatNumber(d.agency_fee) : "-",
+          d.kol_fee != null && d.kol_fee != 0 ? "Rp " + formatNumber(d.kol_fee) : "-",
           d.brief_sow || "",
           d.content_link || "",
           d.insight_link || "",
