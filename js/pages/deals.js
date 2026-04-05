@@ -73,6 +73,7 @@ function handleTypePromote() {
 function calculateKolFee() {
 
   const type = $("input[name='typePromote']:checked").val();
+
   if (type !== "PAID") {
     $("#kolFee").val("");
     return;
@@ -87,16 +88,19 @@ function calculateKolFee() {
     return;
   }
 
-  let admin1 = parseNumber($("#adminFee").val());
-  let agency = parseNumber($("#agencyFee").val());
+  // Ambil raw input
+  const adminInput = $("#adminFee").val();
+  const agencyInput = $("#agencyFee").val();
 
-  if (!admin1) {
-    admin1 = amount * 0.15;
-  }
+  const admin1 = adminInput === "" ? 0 : parseNumber(adminInput);
+  const agency = agencyInput === "" ? 0 : parseNumber(agencyInput);
 
-  if (!agency) {
-    agency = amount * 0.05;
-  }
+  console.log("amount", amount);
+  console.log("admin1", admin1);
+  console.log("admin2", admin2);
+  console.log("agency", agency);
+  console.log("iuFee", iuFee);
+  console.log("==============================");
 
   const kol = amount - admin1 - admin2 - agency - iuFee;
 
@@ -356,7 +360,7 @@ function registerEvents() {
       .prop("checked", true);
 
     handleTypePromote();
-    calculateKolFee(); 
+    calculateKolFee(); // ✅ tambahan
 
     dealModal.show();
   });
