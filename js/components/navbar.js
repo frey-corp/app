@@ -4,6 +4,7 @@ export function renderNavbar(role) {
 
   if (role === 1) {
     buttons += navItem("management", "bi-briefcase", "Management");
+    buttons += navItem("rekaps", "bi bi-clipboard2-data", "Rekapan");
     buttons += navItem("brands", "bi-tags", "Brand");
     buttons += navItem("users", "bi-people", "Users");
     buttons += navItem("mapkol", "bi-diagram-3", "Mapp KOL");
