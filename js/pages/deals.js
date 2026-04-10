@@ -252,10 +252,10 @@ function loadDeals() {
           3: "job_description",
           4: "deadline",
           5: "amount_dealing",
-          6: "admin_fee",
-          7: "admin_fee_2",
-          8: "agency_fee",
-          9: "iu_fee",
+          6: "iu_fee",
+          7: "admin_fee",
+          8: "admin_fee_2",
+          9: "agency_fee",
           10: "kol_fee",
           11: "brief_sow",
           12: "content_link",
@@ -321,10 +321,14 @@ function loadDeals() {
           //   </button>
           // `
           `
-              <button class="btn btn-sm btn-primary editDealBtn"
-                data-id="${d.id}">
-                Edit
-              </button>
+            <button class="btn btn-sm btn-primary editDealBtn"
+              data-id="${d.id}">
+              Edit
+            </button>
+            <button class="btn btn-sm btn-danger deleteDealBtn"
+              data-id="${d.id}">
+              Delete
+            </button>
             <button class="btn btn-sm btn-secondary printInvoiceBtn"
               data-id="${d.id}">
               Print
@@ -525,6 +529,45 @@ function registerEvents() {
       $("#statusSelect").val(data.status);
 
       dealModal.show();
+    });
+
+  // =========================
+  // DELETE DEAL
+  // =========================
+  $(document)
+    .off("click", ".deleteDealBtn")
+    .on("click", ".deleteDealBtn", async function () {
+      const id = $(this).data("id");
+
+      const confirm = await Swal.fire({
+        title: "Yakin hapus data?",
+        text: "Data yang dihapus tidak bisa dikembalikan!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal"
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      Swal.fire({ title: "Deleting...", didOpen: () => Swal.showLoading() });
+
+      const { error } = await supabase
+        .from("deals")
+        .delete()
+        .eq("id", id);
+
+      Swal.close();
+
+      if (error) {
+        Swal.fire("Error", error.message, "error");
+        return;
+      }
+
+      Swal.fire("Success", "Data berhasil dihapus", "success");
+      loadDeals();
     });
 }
 
