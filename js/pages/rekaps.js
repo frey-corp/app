@@ -18,13 +18,13 @@ export async function init() {
   await loadYears();
   await loadRekapan();
 
-  $("#filterYear")
+  $("#filterYear, #filterStatus")
     .off("change")
     .on("change", async function () {
       await loadRekapan();
     });
 
-  $("#filterYear").select2({
+  $("#filterYear, #filterStatus").select2({
     width: "100%"
   });
 }
@@ -36,7 +36,7 @@ function formatNumber(val) {
 }
 
 function getMonthIndex(date) {
-  return new Date(date).getMonth(); // 0-11
+  return new Date(date).getMonth();
 }
 
 // ================= LOAD TAHUN =================
@@ -57,13 +57,10 @@ async function loadYears() {
       .map(d => new Date(d.deal_date).getFullYear())
   )].sort((a, b) => b - a);
 
-  $("#filterYear").empty().append(`<option value=""></option>`);
-
   years.forEach(y => {
     $("#filterYear").append(`<option value="${y}">${y}</option>`);
   });
 
-  // auto pilih tahun terbaru
   if (years.length) {
     $("#filterYear").val(years[0]).trigger("change");
   }
@@ -74,14 +71,28 @@ async function loadRekapan() {
 
   let query = supabase
     .from("deals_search")
-    .select("*");
+    .select(`
+      deal_date,
+      status,
+      kol_name,
+      admin_name,
+      kol_fee,
+      admin_fee,
+      agency_fee,
+      amount_dealing
+    `);
 
   const year = $("#filterYear").val();
+  const status = $("#filterStatus").val();
 
   if (year) {
     query = query
       .gte("deal_date", `${year}-01-01`)
       .lte("deal_date", `${year}-12-31`);
+  }
+
+  if (status) {
+    query = query.eq("status", status);
   }
 
   const { data, error } = await query;
@@ -91,9 +102,58 @@ async function loadRekapan() {
     return;
   }
 
+  buildRekapAmount(data);
   buildRekapKOL(data);
   buildRekapAdmin(data);
   buildRekapAgency(data);
+}
+
+// ================= REKAP AMOUNT DEALING =================
+function buildRekapAmount(data) {
+
+  let map = {};
+  let monthlyTotal = Array(12).fill(0);
+
+  data.forEach(d => {
+
+    if (!d.kol_name) return;
+
+    const month = getMonthIndex(d.deal_date);
+    const val = Number(d.amount_dealing) || 0;
+
+    if (!map[d.kol_name]) {
+      map[d.kol_name] = Array(12).fill(0);
+    }
+
+    map[d.kol_name][month] += val;
+    monthlyTotal[month] += val;
+  });
+
+  const sorted = Object.entries(map).sort((a, b) => {
+    return b[1].reduce((x, y) => x + y, 0)
+         - a[1].reduce((x, y) => x + y, 0);
+  });
+
+  const tbody = $("#rekapAmountTable tbody");
+  tbody.empty();
+
+  sorted.forEach(([name, months]) => {
+
+    let row = `<tr>
+      <td class="sticky-col">${name}</td>`;
+
+    months.forEach(v => {
+      row += `<td>${v ? formatNumber(v) : "-"}</td>`;
+    });
+
+    row += `</tr>`;
+    tbody.append(row);
+  });
+
+  const footer = $("#rekapAmountTotal th:not(:first)");
+  footer.each(function (i) {
+    $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
+  });
 }
 
 // ================= REKAP KOL =================
@@ -117,11 +177,9 @@ function buildRekapKOL(data) {
     monthlyTotal[month] += fee;
   });
 
-  // SORT by total terbesar
   const sorted = Object.entries(map).sort((a, b) => {
-    const sumA = a[1].reduce((x, y) => x + y, 0);
-    const sumB = b[1].reduce((x, y) => x + y, 0);
-    return sumB - sumA;
+    return b[1].reduce((x, y) => x + y, 0)
+         - a[1].reduce((x, y) => x + y, 0);
   });
 
   const tbody = $("#rekapKolTable tbody");
@@ -140,7 +198,6 @@ function buildRekapKOL(data) {
     tbody.append(row);
   });
 
-  // FOOTER TOTAL
   const footer = $("#rekapKolTotal th:not(:first)");
   footer.each(function (i) {
     $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
@@ -168,11 +225,9 @@ function buildRekapAdmin(data) {
     monthlyTotal[month] += fee;
   });
 
-  // SORT
   const sorted = Object.entries(map).sort((a, b) => {
-    const sumA = a[1].reduce((x, y) => x + y, 0);
-    const sumB = b[1].reduce((x, y) => x + y, 0);
-    return sumB - sumA;
+    return b[1].reduce((x, y) => x + y, 0)
+         - a[1].reduce((x, y) => x + y, 0);
   });
 
   const tbody = $("#rekapAdminTable tbody");
@@ -191,7 +246,6 @@ function buildRekapAdmin(data) {
     tbody.append(row);
   });
 
-  // FOOTER
   const footer = $("#rekapAdminTotal th:not(:first)");
   footer.each(function (i) {
     $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
