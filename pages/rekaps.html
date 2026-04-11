@@ -7,7 +7,6 @@
     position: relative;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    border-radius: 10px;
 }
 
 /* =========================
@@ -180,11 +179,51 @@
 
     <!-- FILTER -->
     <div class="row mb-3">
-        <div class="col-12 col-md-3">
+        <div class="col-6 col-md-3">
             <label class="form-label">Tahun</label>
             <select id="filterYear" class="form-select">
-                <option value=""></option>
             </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label">Status</label>
+            <select id="filterStatus" class="form-select">
+                <option value="FINISH" selected>Finish</option>
+                <option value="ON_PROGRESS">On Progress</option>
+                <option value="">ALL</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ================= CARD 0: AMOUNT DEALING ================= -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            Rekapan Total Amount Dealing (By KOL)
+        </div>
+
+        <div class="card-body table-responsive">
+            <table id="rekapAmountTable" class="table table-bordered table-striped align-middle tbl-rekap">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th class="sticky-col">Nama KOL</th>
+                        <th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th>
+                        <th>Mei</th><th>Jun</th><th>Jul</th><th>Agu</th>
+                        <th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th>
+                    </tr>
+                </thead>
+
+                <tbody></tbody>
+
+                <tfoot>
+                    <tr id="rekapAmountTotal">
+                        <th class="sticky-col">Total</th>
+                        <th></th><th></th><th></th><th></th>
+                        <th></th><th></th><th></th><th></th>
+                        <th></th><th></th><th></th><th></th>
+                    </tr>
+                </tfoot>
+
+            </table>
         </div>
     </div>
 
