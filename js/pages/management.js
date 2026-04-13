@@ -108,7 +108,7 @@ function loadDeals() {
   $("#dealsTable").DataTable({
     processing: true,
     serverSide: true,
-    responsive: false,
+    responsive: true,
     searching: true,
     ordering: true,
     pageLength: 25,
