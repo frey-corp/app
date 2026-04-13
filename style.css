@@ -127,6 +127,21 @@ table.dataTable tbody td {
     font-size: 0.85rem;
 }
 
+.dataTables_wrapper .dataTables_length select {
+    height: 30px;
+    padding: 0.25rem 1.5rem 0.25rem 0.5rem; /* kanan diperbesar */
+    font-size: 0.85rem;
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='16' viewBox='0 0 20 20' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M5 7l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 12px;
+}
+
 
 /* ================================
    RESPONSIVE DATATABLE CHILD ROW
