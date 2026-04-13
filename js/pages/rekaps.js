@@ -16,13 +16,17 @@ export async function init() {
   $("#rekapanPage").removeClass("d-none");
 
   await loadYears();
-  await loadRekapan();
+  await loadRekapanAmount();
+  await loadRekapanFee();
 
   $("#filterYear, #filterStatus")
     .off("change")
     .on("change", async function () {
-      await loadRekapan();
+      await loadRekapanAmount();
+      await loadRekapanFee();
     });
+
+  $("#downloadExcel").off("click").on("click", downloadExcel);
 
   $("#filterYear, #filterStatus").select2({
     width: "100%"
@@ -39,6 +43,10 @@ function getMonthIndex(date) {
   return new Date(date).getMonth();
 }
 
+function getMonthName() {
+  return ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+}
+
 // ================= LOAD TAHUN =================
 async function loadYears() {
 
@@ -46,10 +54,7 @@ async function loadYears() {
     .from("deals_search")
     .select("deal_date");
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+  if (error) return console.error(error);
 
   const years = [...new Set(
     data
@@ -66,8 +71,8 @@ async function loadYears() {
   }
 }
 
-// ================= LOAD REKAP =================
-async function loadRekapan() {
+// ================= LOAD AMOUNT =================
+async function loadRekapanAmount() {
 
   let query = supabase
     .from("deals_search")
@@ -75,10 +80,6 @@ async function loadRekapan() {
       deal_date,
       status,
       kol_name,
-      admin_name,
-      kol_fee,
-      admin_fee,
-      agency_fee,
       amount_dealing
     `);
 
@@ -96,48 +97,72 @@ async function loadRekapan() {
   }
 
   const { data, error } = await query;
-
-  if (error) {
-    console.error(error);
-    return;
-  }
+  if (error) return console.error(error);
 
   buildRekapAmount(data);
+
+  // 👉 panggil chart dengan data KOL juga
+  await loadRekapanFeeForChart(data);
+}
+
+// ================= LOAD FEE =================
+async function loadRekapanFee() {
+
+  let query = supabase
+    .from("deals_search")
+    .select(`
+      transfer_date,
+      status,
+      kol_name,
+      admin_name,
+      kol_fee,
+      admin_fee,
+      agency_fee
+    `);
+
+  const year = $("#filterYear").val();
+  const status = $("#filterStatus").val();
+
+  if (year) {
+    query = query
+      .gte("transfer_date", `${year}-01-01`)
+      .lte("transfer_date", `${year}-12-31`);
+  }
+
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query;
+  if (error) return console.error(error);
+
   buildRekapKOL(data);
   buildRekapAdmin(data);
   buildRekapAgency(data);
 }
 
-// ================= REKAP AMOUNT DEALING =================
+// ================= BUILD AMOUNT =================
 function buildRekapAmount(data) {
 
   let map = {};
   let monthlyTotal = Array(12).fill(0);
 
   data.forEach(d => {
-
     if (!d.kol_name) return;
 
-    const month = getMonthIndex(d.deal_date);
+    const m = getMonthIndex(d.deal_date);
     const val = Number(d.amount_dealing) || 0;
 
-    if (!map[d.kol_name]) {
-      map[d.kol_name] = Array(12).fill(0);
-    }
+    if (!map[d.kol_name]) map[d.kol_name] = Array(12).fill(0);
 
-    map[d.kol_name][month] += val;
-    monthlyTotal[month] += val;
-  });
-
-  const sorted = Object.entries(map).sort((a, b) => {
-    return b[1].reduce((x, y) => x + y, 0)
-         - a[1].reduce((x, y) => x + y, 0);
+    map[d.kol_name][m] += val;
+    monthlyTotal[m] += val;
   });
 
   const tbody = $("#rekapAmountTable tbody");
   tbody.empty();
 
-  sorted.forEach(([name, months]) => {
+  Object.entries(map).forEach(([name, months]) => {
 
     let row = `<tr>
       <td class="sticky-col">${name}</td>`;
@@ -150,122 +175,165 @@ function buildRekapAmount(data) {
     tbody.append(row);
   });
 
-  const footer = $("#rekapAmountTotal th:not(:first)");
-  footer.each(function (i) {
+  $("#rekapAmountTotal th:not(:first)").each(function(i){
     $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
   });
 }
 
-// ================= REKAP KOL =================
+// ================= BUILD KOL =================
 function buildRekapKOL(data) {
 
   let map = {};
-  let monthlyTotal = Array(12).fill(0);
 
   data.forEach(d => {
-
     if (!d.kol_name) return;
 
-    const month = getMonthIndex(d.deal_date);
-    const fee = Number(d.kol_fee) || 0;
+    const m = getMonthIndex(d.transfer_date);
+    const val = Number(d.kol_fee) || 0;
 
-    if (!map[d.kol_name]) {
-      map[d.kol_name] = Array(12).fill(0);
-    }
-
-    map[d.kol_name][month] += fee;
-    monthlyTotal[month] += fee;
+    if (!map[d.kol_name]) map[d.kol_name] = Array(12).fill(0);
+    map[d.kol_name][m] += val;
   });
 
-  const sorted = Object.entries(map).sort((a, b) => {
-    return b[1].reduce((x, y) => x + y, 0)
-         - a[1].reduce((x, y) => x + y, 0);
-  });
-
-  const tbody = $("#rekapKolTable tbody");
-  tbody.empty();
-
-  sorted.forEach(([name, months]) => {
-
-    let row = `<tr>
-      <td class="sticky-col">${name}</td>`;
-
-    months.forEach(v => {
-      row += `<td>${v ? formatNumber(v) : "-"}</td>`;
-    });
-
-    row += `</tr>`;
-    tbody.append(row);
-  });
-
-  const footer = $("#rekapKolTotal th:not(:first)");
-  footer.each(function (i) {
-    $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
-  });
+  renderTable("#rekapKolTable", map);
 }
 
-// ================= REKAP ADMIN =================
+// ================= BUILD ADMIN =================
 function buildRekapAdmin(data) {
 
   let map = {};
-  let monthlyTotal = Array(12).fill(0);
 
   data.forEach(d => {
-
     if (!d.admin_name || d.admin_name === "Admin") return;
 
-    const month = getMonthIndex(d.deal_date);
-    const fee = Number(d.admin_fee) || 0;
+    const m = getMonthIndex(d.transfer_date);
+    const val = Number(d.admin_fee) || 0;
 
-    if (!map[d.admin_name]) {
-      map[d.admin_name] = Array(12).fill(0);
-    }
-
-    map[d.admin_name][month] += fee;
-    monthlyTotal[month] += fee;
+    if (!map[d.admin_name]) map[d.admin_name] = Array(12).fill(0);
+    map[d.admin_name][m] += val;
   });
 
-  const sorted = Object.entries(map).sort((a, b) => {
-    return b[1].reduce((x, y) => x + y, 0)
-         - a[1].reduce((x, y) => x + y, 0);
-  });
-
-  const tbody = $("#rekapAdminTable tbody");
-  tbody.empty();
-
-  sorted.forEach(([name, months]) => {
-
-    let row = `<tr>
-      <td class="sticky-col">${name}</td>`;
-
-    months.forEach(v => {
-      row += `<td>${v ? formatNumber(v) : "-"}</td>`;
-    });
-
-    row += `</tr>`;
-    tbody.append(row);
-  });
-
-  const footer = $("#rekapAdminTotal th:not(:first)");
-  footer.each(function (i) {
-    $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
-  });
+  renderTable("#rekapAdminTable", map);
 }
 
-// ================= REKAP AGENCY =================
+// ================= BUILD AGENCY =================
 function buildRekapAgency(data) {
 
   let monthly = Array(12).fill(0);
 
   data.forEach(d => {
-    const month = getMonthIndex(d.deal_date);
-    const fee = Number(d.agency_fee) || 0;
-    monthly[month] += fee;
+    const m = getMonthIndex(d.transfer_date);
+    const val = Number(d.agency_fee) || 0;
+    monthly[m] += val;
   });
 
-  const row = $("#rekapAgencyRow td:not(:first)");
-
-  row.each(function (i) {
+  $("#rekapAgencyRow td:not(:first)").each(function(i){
     $(this).text(monthly[i] ? formatNumber(monthly[i]) : "-");
   });
+}
+
+// ================= HELPER RENDER =================
+function renderTable(selector, map) {
+
+  const tbody = $(`${selector} tbody`);
+  tbody.empty();
+
+  Object.entries(map).forEach(([name, months]) => {
+
+    let row = `<tr>
+      <td class="sticky-col">${name}</td>`;
+
+    months.forEach(v => {
+      row += `<td>${v ? formatNumber(v) : "-"}</td>`;
+    });
+
+    row += `</tr>`;
+    tbody.append(row);
+  });
+}
+
+// ================= CHART (UPDATED) =================
+function buildChart(dataAmount, dataFee) {
+
+  let monthlyAmount = Array(12).fill(0);
+  let monthlyKOL = Array(12).fill(0);
+
+  dataAmount.forEach(d => {
+    if (!d.kol_name) return;
+    const m = getMonthIndex(d.deal_date);
+    monthlyAmount[m] += Number(d.amount_dealing) || 0;
+  });
+
+  dataFee.forEach(d => {
+    if (!d.kol_name) return;
+    const m = getMonthIndex(d.transfer_date);
+    monthlyKOL[m] += Number(d.kol_fee) || 0;
+  });
+
+  Highcharts.chart("rekapChart", {
+    chart: { type: "column" },
+    title: { text: "Perbandingan Amount vs KOL Fee" },
+    xAxis: { categories: getMonthName() },
+    yAxis: { title: { text: "Total (Rp)" } },
+    tooltip: {
+      shared: true,
+      formatter: function () {
+        let s = `<b>${this.x}</b>`;
+        this.points.forEach(p => {
+          s += `<br/>${p.series.name}: <b>${formatNumber(p.y)}</b>`;
+        });
+        return s;
+      }
+    },
+    series: [
+      { name: "Amount", data: monthlyAmount },
+      { name: "KOL Fee", data: monthlyKOL }
+    ]
+  });
+}
+
+// ================= AMBIL DATA FEE UNTUK CHART =================
+async function loadRekapanFeeForChart(amountData) {
+
+  let query = supabase
+    .from("deals_search")
+    .select(`
+      transfer_date,
+      kol_name,
+      kol_fee,
+      status
+    `);
+
+  const year = $("#filterYear").val();
+  const status = $("#filterStatus").val();
+
+  if (year) {
+    query = query
+      .gte("transfer_date", `${year}-01-01`)
+      .lte("transfer_date", `${year}-12-31`);
+  }
+
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  const { data: feeData, error } = await query;
+  if (error) return console.error(error);
+
+  buildChart(amountData, feeData);
+}
+
+// ================= DOWNLOAD EXCEL =================
+function downloadExcel() {
+
+  let wb = XLSX.utils.book_new();
+
+  $("#rekapAmountTable, #rekapKolTable, #rekapAdminTable, #rekapAgencyTable")
+    .each(function (i, table) {
+
+      let ws = XLSX.utils.table_to_sheet(table);
+      XLSX.utils.book_append_sheet(wb, ws, `Sheet${i+1}`);
+    });
+
+  XLSX.writeFile(wb, "Rekapan.xlsx");
 }
