@@ -1,3 +1,4 @@
+
 import { supabase } from "../supabase.js";
 import { getCurrentUser } from "../app.js";
 
@@ -141,11 +142,40 @@ async function loadRekapanFee() {
   buildRekapAgency(data);
 }
 
+// ================= HELPER =================
+function initMonthArray() {
+  return Array(12).fill(0);
+}
+
+function sortByName(map) {
+  return Object.entries(map)
+    .sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function appendRow(tbody, name, months) {
+  let row = `<tr>
+    <td class="sticky-col">${name}</td>`;
+
+  months.forEach(v => {
+    row += `<td>${v ? formatNumber(v) : "-"}</td>`;
+  });
+
+  row += `</tr>`;
+  tbody.append(row);
+}
+
+function renderTotalRow(selector, monthlyTotal) {
+  $(`${selector} th:not(:first)`).each(function(i){
+    $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
+  });
+}
+
+
 // ================= BUILD AMOUNT =================
 function buildRekapAmount(data) {
 
   let map = {};
-  let monthlyTotal = Array(12).fill(0);
+  let monthlyTotal = initMonthArray();
 
   data.forEach(d => {
     if (!d.kol_name) return;
@@ -153,7 +183,7 @@ function buildRekapAmount(data) {
     const m = getMonthIndex(d.deal_date);
     const val = Number(d.amount_dealing) || 0;
 
-    if (!map[d.kol_name]) map[d.kol_name] = Array(12).fill(0);
+    if (!map[d.kol_name]) map[d.kol_name] = initMonthArray();
 
     map[d.kol_name][m] += val;
     monthlyTotal[m] += val;
@@ -162,28 +192,19 @@ function buildRekapAmount(data) {
   const tbody = $("#rekapAmountTable tbody");
   tbody.empty();
 
-  Object.entries(map).forEach(([name, months]) => {
-
-    let row = `<tr>
-      <td class="sticky-col">${name}</td>`;
-
-    months.forEach(v => {
-      row += `<td>${v ? formatNumber(v) : "-"}</td>`;
-    });
-
-    row += `</tr>`;
-    tbody.append(row);
+  sortByName(map).forEach(([name, months]) => {
+    appendRow(tbody, name, months);
   });
 
-  $("#rekapAmountTotal th:not(:first)").each(function(i){
-    $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
-  });
+  renderTotalRow("#rekapAmountTotal", monthlyTotal);
 }
+
 
 // ================= BUILD KOL =================
 function buildRekapKOL(data) {
 
   let map = {};
+  let monthlyTotal = initMonthArray();
 
   data.forEach(d => {
     if (!d.kol_name) return;
@@ -191,17 +212,28 @@ function buildRekapKOL(data) {
     const m = getMonthIndex(d.transfer_date);
     const val = Number(d.kol_fee) || 0;
 
-    if (!map[d.kol_name]) map[d.kol_name] = Array(12).fill(0);
+    if (!map[d.kol_name]) map[d.kol_name] = initMonthArray();
+
     map[d.kol_name][m] += val;
+    monthlyTotal[m] += val;
   });
 
-  renderTable("#rekapKolTable", map);
+  const tbody = $("#rekapKolTable tbody");
+  tbody.empty();
+
+  sortByName(map).forEach(([name, months]) => {
+    appendRow(tbody, name, months);
+  });
+
+  renderTotalRow("#rekapKolTotal", monthlyTotal);
 }
+
 
 // ================= BUILD ADMIN =================
 function buildRekapAdmin(data) {
 
   let map = {};
+  let monthlyTotal = initMonthArray();
 
   data.forEach(d => {
     if (!d.admin_name || d.admin_name === "Admin") return;
@@ -209,26 +241,36 @@ function buildRekapAdmin(data) {
     const m = getMonthIndex(d.transfer_date);
     const val = Number(d.admin_fee) || 0;
 
-    if (!map[d.admin_name]) map[d.admin_name] = Array(12).fill(0);
+    if (!map[d.admin_name]) map[d.admin_name] = initMonthArray();
+
     map[d.admin_name][m] += val;
+    monthlyTotal[m] += val;
   });
 
-  renderTable("#rekapAdminTable", map);
+  const tbody = $("#rekapAdminTable tbody");
+  tbody.empty();
+
+  sortByName(map).forEach(([name, months]) => {
+    appendRow(tbody, name, months);
+  });
+
+  renderTotalRow("#rekapAdminTotal", monthlyTotal);
 }
+
 
 // ================= BUILD AGENCY =================
 function buildRekapAgency(data) {
 
-  let monthly = Array(12).fill(0);
+  let monthlyTotal = initMonthArray();
 
   data.forEach(d => {
     const m = getMonthIndex(d.transfer_date);
     const val = Number(d.agency_fee) || 0;
-    monthly[m] += val;
+    monthlyTotal[m] += val;
   });
 
   $("#rekapAgencyRow td:not(:first)").each(function(i){
-    $(this).text(monthly[i] ? formatNumber(monthly[i]) : "-");
+    $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
   });
 }
 
