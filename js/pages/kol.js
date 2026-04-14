@@ -127,16 +127,15 @@ function loadDeals() {
           2: "job_description",
           3: "deadline",
           4: "amount_dealing",
-          5: "admin_fee",
-          6: "admin_fee_2",
-          7: "agency_fee",
-          8: "kol_fee",
-          9: "brief_sow",
-          10: "content_link",
-          11: "transfer_date",
-          12: "status",
-          13: "type_promote",
-          14: "notes"
+          5: "agency_fee",
+          6: "kol_fee",
+          7: "brief_sow",
+          8: "content_link",
+          9: "insight_link",
+          10: "transfer_date",
+          11: "status",
+          12: "type_promote",
+          13: "notes"
         };
 
         if (columnMap[orderColIndex]) {
@@ -164,12 +163,18 @@ function loadDeals() {
           d.job_description || "",
           d.deadline || "",
           d.type_promote === "PAID" ? "Rp " + formatNumber(d.amount_dealing) : "-",
-          d.admin_fee != null ? "Rp " + formatNumber(d.admin_fee) : "-",
-          d.admin_fee_2 != null ? "Rp " + formatNumber(d.admin_fee_2) : "-",
-          d.agency_fee != null ? "Rp " + formatNumber(d.agency_fee) : "-",
-          d.kol_fee != null ? "Rp " + formatNumber(d.kol_fee) : "-",
+          (d.iu_fee || 0) + (d.admin_fee || 0) + (d.admin_fee_2 || 0) + (d.agency_fee || 0) !== 0
+          ? "Rp " + formatNumber(
+              (d.iu_fee || 0) +
+              (d.admin_fee || 0) +
+              (d.admin_fee_2 || 0) +
+              (d.agency_fee || 0)
+            )
+          : "-",
+          d.kol_fee != null && d.kol_fee != 0 ? "Rp " + formatNumber(d.kol_fee) : "-",
           d.brief_sow || "",
           d.content_link || "",
+          d.insight_link || "",
           d.transfer_date || "",
           d.status,
           d.type_promote,
