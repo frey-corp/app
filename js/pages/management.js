@@ -69,7 +69,7 @@ async function loadMaster() {
 
   const { data: kolMap } = await supabase
     .from("users")
-    .select("*")
+    .select("id, full_name")
     .eq("role", 2);
 
   $("#kolSelect").empty().append(`<option value=""></option>`);
