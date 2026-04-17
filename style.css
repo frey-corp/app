@@ -260,7 +260,7 @@ table.dataTable.dtr-inline.collapsed
 }
 
 .table-responsive {
-    max-height: 450px;
+    height: calc(75vh); 
     overflow-y: auto;
     overflow-x: auto;
     position: relative;
