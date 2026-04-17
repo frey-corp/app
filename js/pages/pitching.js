@@ -130,7 +130,7 @@ function initDataTable() {
     searching: true,
     ordering: false,
     pageLength: 25,
-    lengthMenu: [10, 25, 50, 100],
+    lengthMenu: [10, 25, 50, 100, 500, 1000, 3000],
     dom: 'Blfrtip',
 
     ajax: async function (data, callback) {
