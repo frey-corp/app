@@ -102,7 +102,6 @@ async function loadRekapanAmount() {
 
   buildRekapAmount(data);
 
-  // 👉 panggil chart dengan data KOL juga
   await loadRekapanFeeForChart(data);
 }
 
@@ -118,6 +117,7 @@ async function loadRekapanFee() {
       admin_name,
       kol_fee,
       admin_fee,
+      iu_fee,
       agency_fee
     `);
 
@@ -139,6 +139,7 @@ async function loadRekapanFee() {
 
   buildRekapKOL(data);
   buildRekapAdmin(data);
+  buildRekapIu(data);
   buildRekapAgency(data);
 }
 
@@ -169,7 +170,6 @@ function renderTotalRow(selector, monthlyTotal) {
     $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
   });
 }
-
 
 // ================= BUILD AMOUNT =================
 function buildRekapAmount(data) {
@@ -257,6 +257,21 @@ function buildRekapAdmin(data) {
   renderTotalRow("#rekapAdminTotal", monthlyTotal);
 }
 
+// ================= BUILD IU =================
+function buildRekapIu(data) {
+
+  let monthlyTotal = initMonthArray();
+
+  data.forEach(d => {
+    const m = getMonthIndex(d.transfer_date);
+    const val = Number(d.iu_fee) || 0;
+    monthlyTotal[m] += val;
+  });
+
+  $("#rekapIuRow td:not(:first)").each(function(i){
+    $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
+  });
+}
 
 // ================= BUILD AGENCY =================
 function buildRekapAgency(data) {
@@ -271,26 +286,6 @@ function buildRekapAgency(data) {
 
   $("#rekapAgencyRow td:not(:first)").each(function(i){
     $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
-  });
-}
-
-// ================= HELPER RENDER =================
-function renderTable(selector, map) {
-
-  const tbody = $(`${selector} tbody`);
-  tbody.empty();
-
-  Object.entries(map).forEach(([name, months]) => {
-
-    let row = `<tr>
-      <td class="sticky-col">${name}</td>`;
-
-    months.forEach(v => {
-      row += `<td>${v ? formatNumber(v) : "-"}</td>`;
-    });
-
-    row += `</tr>`;
-    tbody.append(row);
   });
 }
 
