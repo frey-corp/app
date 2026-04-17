@@ -199,16 +199,6 @@
         </div>
     </div>
 
-    <!-- CHART -->
-    <div class="card mb-4">
-        <div class="card-header bg-info text-white">
-            Chart Rekapan
-        </div>
-        <div class="card-body">
-            <div id="rekapChart"></div>
-        </div>
-    </div>
-
     <!-- ================= CARD 0: AMOUNT DEALING ================= -->
     <div class="card mb-4">
         <div class="card-header bg-dark text-white">
@@ -308,7 +298,38 @@
         </div>
     </div>
 
-    <!-- ================= CARD 3: AGENCY ================= -->
+    <!-- ================= CARD 3: Iu ================= -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            Rekapan Iu Fee
+        </div>
+
+        <div class="card-body table-responsive">
+            <table id="rekapIuTable" class="table table-bordered table-striped align-middle tbl-rekap">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th class="sticky-col">Iu Fee</th>
+                        <th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th>
+                        <th>Mei</th><th>Jun</th><th>Jul</th><th>Agu</th>
+                        <th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr id="rekapIuRow">
+                        <td class="sticky-col">Total</td>
+                        <td></td><td></td><td></td><td></td>
+                        <td></td><td></td><td></td><td></td>
+                        <td></td><td></td><td></td><td></td>
+                    </tr>
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <!-- ================= CARD 4: AGENCY ================= -->
     <div class="card mb-4">
         <div class="card-header bg-warning">
             Rekapan Agency Fee
@@ -336,6 +357,16 @@
                 </tbody>
 
             </table>
+        </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            Chart Rekapan
+        </div>
+        <div class="card-body">
+            <div id="rekapChart"></div>
         </div>
     </div>
 
