@@ -9,6 +9,8 @@ body {
     font-family: Arial, sans-serif;
     margin: 40px;
     color: #5a4a42;
+    position: relative;
+    z-index: 1;
 }
 
 /* HEADER */
@@ -126,13 +128,22 @@ body {
 .desc-wrapper {
     display: flex;
     flex-direction: column;
-    min-height: 100px;
+    min-height: 130px;
 }
 
 .desc-text {
     flex: 1;
     word-wrap: break-word;
     overflow-wrap: break-word;
+}
+
+.bg-daun {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 300px;
+    z-index: -1;
+    pointer-events: none; 
 }
 
 </style>
@@ -274,6 +285,8 @@ body {
 <div class="thank">
     ~Thank You for Collab With Us~
 </div>
+
+<img src="assets/images/daun2.png" class="bg-daun">
 
 <script>
 // =========================
