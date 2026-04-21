@@ -178,10 +178,118 @@ function loadDeals() {
           d.transfer_date || "",
           d.status,
           d.type_promote,
-          d.notes || ""
+          d.notes || "",
+          `<button class="btn btn-sm btn-secondary printInvoiceBtn"
+              data-id="${d.id}">
+              Print Invoice
+            </button>`
         ])
       });
     }
 
   });
+
+  $(document).on("click", ".printInvoiceBtn", async function () {
+    const id = $(this).data("id");
+
+    // ambil semua data sekaligus (JOIN)
+    const { data, error } = await supabase
+    .from("deals")
+    .select(`
+      id,
+      deal_date,
+      deadline,
+      job_description,
+      brief_sow,
+      notes,
+      amount_dealing,
+
+      brand:brands (
+        brand_name,
+        brand_addres
+      ),
+
+      kol:users!fk_kol_user (
+        full_name,
+        username,
+        instagram_account,
+        tiktok_account,
+        whatsapp_number,
+        bank_name,
+        bank_account_number,
+        alamat
+      ),
+
+      admin:users!fk_admin_user (
+        full_name,
+        whatsapp_number
+      )
+    `)
+    .eq("id", id)
+    .single();
+
+    if (error || !data) {
+      console.error(error);
+      alert("Gagal ambil data");
+      return;
+    }
+
+    // =========================
+    // GENERATE INVOICE NUMBER
+    // =========================
+    const date = new Date(data.deal_date);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+
+    // hitung urutan (optional, cuma buat “feel” aja)
+    const { count } = await supabase
+      .from("deals")
+      .select("*", { count: "exact", head: true })
+      .gte("deal_date", `${year}-${month}-01`)
+      .lte("deal_date", `${year}-${month}-31`);
+
+    // ambil short uuid
+    const shortId = data.id.replace(/-/g, "").slice(0, 4);
+
+    // final invoice
+    const invoiceNumber = `${year}${month}${shortId}`;
+
+    // =========================
+    // FORMAT DATA
+    // =========================
+    const formatRupiah = (num) =>
+      "IDR " + Number(num || 0).toLocaleString("id-ID");
+
+    const params = new URLSearchParams({
+      invoice: invoiceNumber,
+      issued_date: data.deadline || "",
+
+      brand: data.brand?.brand_name || "",
+      brand_address: data.brand?.brand_addres || "",
+
+      kol: data.kol?.full_name || "",
+      kol_username: data.kol?.username || "",
+      kol_address: data.kol?.alamat || "",
+
+      description: data.job_description || "",
+
+      amount: formatRupiah(data.amount_dealing),
+
+      instagram: data.kol?.instagram_account || "",
+      tiktok: data.kol?.tiktok_account || "",
+      whatsapp: data.kol?.whatsapp_number || "",
+
+      bank: data.kol?.bank_name || "",
+      rekening: data.kol?.bank_account_number || "",
+
+      admin_name: data.admin?.full_name || "",
+      admin_wa: data.admin?.whatsapp_number || ""
+    });
+
+    // =========================
+    // OPEN PRINT PAGE
+    // =========================
+    window.open(`invoice.html?${params.toString()}`, "_blank");
+  });
+  
 }
