@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Invoice</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    color: #5a4a42;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid #c97c5d;
+    padding-bottom: 10px;
+}
+
+.title {
+    font-size: 48px;
+    font-weight: bold;
+    color: #c97c5d;
+}
+
+.logo {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+}
+
+/* SECTION FLEX */
+.section-flex {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.section-left {
+    width: 60%;
+}
+
+.section-right {
+    width: 35%;
+    text-align: right;
+}
+
+/* LINE */
+.line {
+    border-bottom: 2px solid #c97c5d;
+    margin: 15px 0;
+}
+
+/* TABLE */
+.table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    border-bottom: 2px solid #c97c5d;
+    padding-bottom: 5px;
+}
+
+.table td {
+    padding: 10px 0;
+}
+
+.right {
+    text-align: right;
+}
+
+.total {
+    font-weight: bold;
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+/* FOOTER */
+.footer {
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* ICON */
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.contact-item img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+/* SIGNATURE */
+.signature {
+    text-align: right;
+}
+
+.signature img {
+    display: block;
+    margin: 10px auto;
+    max-width: 120px;
+    max-height: 80px;
+    object-fit: contain;
+}
+
+/* THANK */
+.thank {
+    text-align: center;
+    margin-top: 30px;
+    font-style: italic;
+    color: #8c7b75;
+}
+
+.desc-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100px;
+}
+
+.desc-text {
+    flex: 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div>
+        <div class="title">INVOICE</div>
+        <div><b>Invoice No:</b> <span id="invoice"></span></div>
+    </div>
+
+    <div>
+        <img src="assets/images/logofreycorp.jpeg" class="logo">
+    </div>
+</div>
+
+<!-- ISSUED + RIGHT INFO -->
+<div class="section-flex">
+
+    <!-- LEFT -->
+    <div class="section-left">
+        <b>ISSUED TO:</b><br>
+        <span id="brand"></span><br>
+        <span id="brand_address"></span>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="section-right">
+        Endorsement, Collab, Visit, BA<br><br>
+        <span id="kol_address"></span>
+    </div>
+
+</div>
+
+<!-- DATE -->
+<div style="margin-top:20px;">
+    <b>Issued Date:</b> <span id="issued_date"></span>
+</div>
+
+<div class="line"></div>
+
+<!-- TABLE -->
+<table class="table">
+    <thead>
+        <tr style="width:100%">
+            <th style="width:80%">DESCRIPTION</th>
+            <th class="right">SUBTOTAL</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+				<div class="desc-wrapper">
+					<div id="description" class="desc-text"></div>
+				</div>
+			</td>
+            <td class="right" id="amount"></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="line"></div>
+
+<!-- TOTAL -->
+<div class="right total">
+    TOTAL: <span id="amount_total"></span>
+</div>
+
+<!-- PAYMENT -->
+<div class="payment">
+    <b>PAYMENT TO</b>
+    <table>
+        <tr>
+            <td>Bank</td>
+            <td>:</td>
+            <td><span id="bank"></span></td>
+        </tr>
+        <tr>
+            <td>Account No</td>
+            <td>:</td>
+            <td><span id="rekening"></span></td>
+        </tr>
+        <tr>
+            <td>Account Name</td>
+            <td>:</td>
+            <td><span id="kol"></span></td>
+        </tr>
+    </table>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+
+    <!-- LEFT: CONTACT ADMIN -->
+    <div>
+        <b>Contact Admin</b><br>
+
+        <div class="contact-item">
+            <img src="wa.svg">
+            <span id="admin_wa"></span>
+        </div>
+
+        <div style="margin-top:5px;">
+            <span id="admin_name"></span>
+        </div>
+
+        <br><br>
+
+        <!-- KOL SOCIAL -->
+        <b>KOL Account</b>
+
+        <div class="contact-item">
+            <img src="ig.svg">
+            <span id="instagram"></span>
+        </div>
+
+        <div class="contact-item">
+            <img src="tiktok.svg">
+            <span id="tiktok"></span>
+        </div>
+    </div>
+
+    <!-- RIGHT: SIGNATURE -->
+    <div class="signature">
+        BEST REGARD,<br><br>
+
+        <img id="ttd_image" src="" alt="TTD">
+
+        <b id="kol_name"></b><br>
+        <span id="instagram"></span>
+    </div>
+
+</div>
+
+<!-- THANK -->
+<div class="thank">
+    ~Thank You for Collab With Us~
+</div>
+
+<script>
+// =========================
+// PARAMS
+// =========================
+const params = new URLSearchParams(window.location.search);
+
+const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val || "-";
+};
+
+// =========================
+// FORMAT DATE
+// =========================
+const formatTanggal = (tgl) => {
+    if (!tgl) return "-";
+    return new Date(tgl).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+    });
+};
+
+// =========================
+// SET DATA
+// =========================
+setText("invoice", params.get("invoice"));
+setText("issued_date", formatTanggal(params.get("issued_date")));
+
+setText("brand", params.get("brand"));
+setText("brand_address", params.get("brand_address"));
+
+setText("kol_address", params.get("kol_address"));
+
+setText("description", params.get("description"));
+
+setText("amount", params.get("amount"));
+setText("amount_total", params.get("amount"));
+
+setText("bank", params.get("bank"));
+setText("rekening", params.get("rekening"));
+
+setText("kol", params.get("kol"));
+setText("kol_name", params.get("kol"));
+
+setText("instagram", params.get("instagram"));
+setText("tiktok", params.get("tiktok"));
+setText("whatsapp", params.get("whatsapp"));
+
+setText("admin_name", params.get("admin_name"));
+setText("admin_wa", params.get("admin_wa"));
+
+// =========================
+// TTD
+// =========================
+const kolUsername = params.get("kol_username");
+if (kolUsername) {
+    document.getElementById("ttd_image").src = `assets/ttd/${kolUsername}.jpg`;
+}
+
+// =========================
+// PRINT
+// =========================
+window.onload = () => {
+    window.print();
+};
+</script>
+
+</body>
+</html>
