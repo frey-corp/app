@@ -28,9 +28,9 @@ export async function init() {
   $("#btnAdd").on("click", openInsert);
   $("#pitchingForm").on("submit", saveData);
 
-  // AUTO FILTER
   $("#filterFrom, #filterTo").on("change", () => pitchingTable.ajax.reload());
   $("#filterKOL").on("change", () => pitchingTable.ajax.reload());
+  $("#filterStatus").on("change", () => pitchingTable.ajax.reload());
 }
 
 
@@ -40,7 +40,6 @@ export async function init() {
 
 async function loadMaster() {
 
-  // ===== LOAD KOL BY ADMIN =====
   const { data: kolMap } = await supabase
     .from("admin_kol_mapping")
     .select(`
@@ -64,7 +63,6 @@ async function loadMaster() {
     }
   });
 
-  // ===== LOAD ACTIVE BRANDS =====
   const { data: brands } = await supabase
     .from("brands")
     .select("*")
@@ -81,7 +79,6 @@ async function loadMaster() {
 
   initSelect2();
 
-  // DEFAULT 3 BULAN
   const today = new Date();
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(today.getMonth() - 3);
@@ -92,7 +89,7 @@ async function loadMaster() {
 
 
 /* ======================================================
-   INIT SELECT2
+   SELECT2
 ====================================================== */
 
 function initSelect2() {
@@ -109,6 +106,7 @@ function initSelect2() {
   });
 
   $("#filterKOL").select2({ width: "100%" });
+  $("#filterStatus").select2({ width: "100%" });
 
   $("#brandSelect").select2({
     width: "100%",
@@ -118,7 +116,7 @@ function initSelect2() {
 
 
 /* ======================================================
-   DATATABLE SERVER SIDE
+   DATATABLE
 ====================================================== */
 
 function initDataTable() {
@@ -130,7 +128,6 @@ function initDataTable() {
     searching: true,
     ordering: false,
     pageLength: 25,
-    lengthMenu: [10, 25, 50, 100, 500, 1000, 3000],
     dom: 'Blfrtip',
 
     ajax: async function (data, callback) {
@@ -149,7 +146,7 @@ function initDataTable() {
         .eq("admin_user_id", currentUser.id)
         .order("pitching_date", { ascending: false });
 
-      /* FILTER */
+      // ===== FILTER =====
       const from = $("#filterFrom").val();
       const to = $("#filterTo").val();
       const kol = $("#filterKOL").val();
@@ -158,7 +155,7 @@ function initDataTable() {
       if (to) query = query.lte("pitching_date", to);
       if (kol) query = query.eq("kol_user_id", kol);
 
-      /* SEARCH */
+      // ===== SEARCH =====
       if (searchValue) {
         query = query.or(`
           markom_name.ilike.%${searchValue}%,
@@ -174,27 +171,78 @@ function initDataTable() {
         return;
       }
 
+      // ===== FILTER STATUS (CLIENT SIDE) =====
+      const selectedStatus = $("#filterStatus").val();
+
+      let filteredRows = rows;
+
+      if (selectedStatus) {
+        filteredRows = rows.filter(d => {
+
+          if (selectedStatus === "Deal") return !!d.deal_date;
+
+          if (selectedStatus === "Follow Up")
+            return !d.deal_date && !!d.followup_date;
+
+          if (selectedStatus === "Respon")
+            return !d.followup_date && !!d.respon_date;
+
+          if (selectedStatus === "Pitching")
+            return !d.respon_date && !!d.pitching_date;
+
+          return true;
+        });
+      }
+
+      // ===== FORMAT DATE =====
+      const formatDate = (date) =>
+        date ? new Date(date).toLocaleDateString("id-ID") : "-";
+
       callback({
         draw: data.draw,
         recordsTotal: count,
-        recordsFiltered: count,
-        data: rows.map(d => [
-          d.pitching_date || "",
-          d.brands?.brand_name || "",
-          d.kol?.full_name || "",
-          d.markom_name || "",
-          d.markom_phone || "",
-          `
-            <button class="btn btn-sm btn-warning editBtn"
-              data-id="${d.id}">
-              Edit
-            </button>
-            <button class="btn btn-sm btn-danger deleteBtn"
-              data-id="${d.id}">
-              Delete
-            </button>
-          `
-        ])
+        recordsFiltered: selectedStatus ? filteredRows.length : count,
+
+        data: filteredRows.map(d => {
+
+          // ===== STATUS BADGE =====
+          let status = `<span class="badge bg-secondary">Unknown</span>`;
+
+          if (d.deal_date)
+            status = `<span class="badge bg-success">Deal</span>`;
+          else if (d.followup_date)
+            status = `<span class="badge bg-primary">Follow Up</span>`;
+          else if (d.respon_date)
+            status = `<span class="badge bg-info text-dark">Respon</span>`;
+          else if (d.pitching_date)
+            status = `<span class="badge bg-warning text-dark">Pitching</span>`;
+
+          return [
+            d.brands?.brand_name || "",
+            d.kol?.full_name || "",
+            status,
+            d.markom_name || "",
+            d.markom_phone || "",
+
+            formatDate(d.pitching_date),
+            formatDate(d.respon_date),
+            formatDate(d.followup_date),
+            formatDate(d.deal_date),
+
+            d.notes || "-",
+
+            `
+              <button class="btn btn-sm btn-warning editBtn"
+                data-id="${d.id}">
+                Edit
+              </button>
+              <button class="btn btn-sm btn-danger deleteBtn"
+                data-id="${d.id}">
+                Delete
+              </button>
+            `
+          ];
+        })
       });
     }
   });
@@ -204,7 +252,7 @@ function initDataTable() {
 
 
 /* ======================================================
-   TABLE BUTTON EVENTS (delegation)
+   ACTION BUTTON
 ====================================================== */
 
 function bindTableActions() {
@@ -249,11 +297,16 @@ async function editData(id) {
   }
 
   $("#pitchingId").val(data.id);
-  $("#pitchingDate").val(data.pitching_date);
   $("#brandSelect").val(data.brand_id).trigger("change");
   $("#kolSelect").val(data.kol_user_id).trigger("change");
   $("#markomName").val(data.markom_name);
   $("#markomPhone").val(data.markom_phone);
+
+  $("#pitchingDate").val(data.pitching_date);
+  $("#responDate").val(data.respon_date);
+  $("#followupDate").val(data.followup_date);
+  $("#dealDate").val(data.deal_date);
+  $("#notes").val(data.notes);
 
   pitchingModal.show();
 }
@@ -270,12 +323,17 @@ async function saveData(e) {
   const id = $("#pitchingId").val();
 
   const payload = {
-    pitching_date: $("#pitchingDate").val(),
     brand_id: $("#brandSelect").val(),
     kol_user_id: $("#kolSelect").val(),
     admin_user_id: currentUser.id,
     markom_name: $("#markomName").val(),
-    markom_phone: $("#markomPhone").val()
+    markom_phone: $("#markomPhone").val(),
+
+    pitching_date: $("#pitchingDate").val(),
+    respon_date: $("#responDate").val() || null,
+    followup_date: $("#followupDate").val() || null,
+    deal_date: $("#dealDate").val() || null,
+    notes: $("#notes").val()
   };
 
   let result;
