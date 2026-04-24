@@ -19,6 +19,7 @@ export function renderNavbar(role) {
 
   if (role === 3) {
     buttons += navItem("kol", "bi-person", "KOL");
+    buttons += navItem("pitching_kol", "bi-rocket", "Pitching");
     buttons += navItem("dashboardkol", "bi-speedometer2", "Dashboard");
   }
 
