@@ -214,9 +214,9 @@ function initDataTable() {
             d.brands?.brand_name || "",
             d.kol?.full_name || "",
             d.admin?.full_name || "",
+            status,
             d.markom_name || "",
             d.markom_phone || "",
-            status,
 
             formatDate(d.pitching_date),
             formatDate(d.respon_date),
