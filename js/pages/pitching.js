@@ -439,3 +439,5 @@ async function deleteData(id) {
   Swal.fire("Deleted!", "Data berhasil dihapus", "success");
   pitchingTable.ajax.reload();
 }
+
+
