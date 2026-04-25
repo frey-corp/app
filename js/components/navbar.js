@@ -47,3 +47,5 @@ function navItem(page, icon, label) {
     </button>
   `;
 }
+
+
