@@ -153,7 +153,9 @@ async function loadMaster() {
 
   $("#brandSelect").select2({
     width: "100%",
-    dropdownParent: $("#dealModal")
+    dropdownParent: $("#dealModal"),
+    tags: true,
+    placeholder: "Pilih atau ketik brand baru"
   });
 
   const from = new Date();
@@ -161,6 +163,43 @@ async function loadMaster() {
 
   $("#filterDateFrom").val(from.toISOString().split("T")[0]);
   $("#filterDateTo").val(today());
+}
+
+async function getOrCreateBrand(brandValue) {
+
+  if (!brandValue) return null;
+
+  // kalau angka → berarti ID existing
+  if (!isNaN(brandValue)) {
+    return Number(brandValue);
+  }
+
+  const brandName = brandValue.trim();
+
+  // cek existing (case-insensitive)
+  const { data: existing } = await supabase
+    .from("brands")
+    .select("id")
+    .ilike("brand_name", brandName)
+    .maybeSingle();
+
+  if (existing) {
+    return existing.id;
+  }
+
+  // insert baru
+  const { data: newBrand, error } = await supabase
+    .from("brands")
+    .insert({
+      brand_name: brandName,
+      is_active: 1
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return newBrand.id;
 }
 
 // =========================
@@ -429,59 +468,69 @@ function registerEvents() {
   $("#dealForm").off("submit").on("submit", async function (e) {
     e.preventDefault();
 
-    const type = $("input[name='typePromote']:checked").val();
+    try {
 
-    if (type === "PAID" && !parseNumber($("#amountDealing").val())) {
-      Swal.fire("Error", "Paid Promote wajib isi Amount Dealing", "error");
-      return;
+      const type = $("input[name='typePromote']:checked").val();
+
+      if (type === "PAID" && !parseNumber($("#amountDealing").val())) {
+        Swal.fire("Error", "Paid Promote wajib isi Amount Dealing", "error");
+        return;
+      }
+
+      if ($("#statusSelect").val() === "FINISH" && !$("#transferDate").val()) {
+        Swal.fire("Error", "Status FINISH wajib isi Tanggal Transfer", "error");
+        return;
+      }
+      
+      const brandId = await getOrCreateBrand($("#brandSelect").val());
+
+      const payload = {
+        deal_date: $("#dealDate").val(),
+        brand_id: brandId, 
+        kol_user_id: $("#kolSelect").val(),
+        admin_user_id: currentUser.id,
+        job_description: $("#jobDesc").val(),
+        notes: $("#notes").val() || null,
+        type_promote: type,
+        deadline: $("#deadline").val() || null,
+        amount_dealing: type === "PAID" ? parseNumber($("#amountDealing").val()) : null,
+        iu_fee: parseNumber($("#iuFee").val()),
+        admin_fee: parseNumber($("#adminFee").val()),
+        admin_fee_2: parseNumber($("#adminFee2").val()),
+        agency_fee: parseNumber($("#agencyFee").val()),
+        kol_fee: type === "PAID" ? parseNumber($("#kolFee").val()) : null,
+        brief_sow: $("#briefSow").val() || null,
+        content_link: $("#contentLink").val() || null,
+        insight_link: $("#insightLink").val() || null,
+        transfer_date: $("#transferDate").val() || null,
+        status: $("#statusSelect").val()
+      };
+
+      const id = $("#dealForm").data("id");
+
+      Swal.fire({ title: "Saving...", didOpen: () => Swal.showLoading() });
+
+      const query = id
+        ? supabase.from("deals").update(payload).eq("id", id)
+        : supabase.from("deals").insert([payload]);
+
+      const { error } = await query;
+      Swal.close();
+
+      if (error) {
+        Swal.fire("Error", error.message, "error");
+        return;
+      }
+
+      Swal.fire("Success", "Data berhasil disimpan", "success");
+      dealModal.hide();
+
+      await loadMaster(); 
+      loadDeals();
+
+    } catch (err) {
+      Swal.fire("Error", err.message, "error");
     }
-
-    if ($("#statusSelect").val() === "FINISH" && !$("#transferDate").val()) {
-      Swal.fire("Error", "Status FINISH wajib isi Tanggal Transfer", "error");
-      return;
-    }
-
-    const payload = {
-      deal_date: $("#dealDate").val(),
-      brand_id: Number($("#brandSelect").val()),
-      kol_user_id: $("#kolSelect").val(),
-      admin_user_id: currentUser.id,
-      job_description: $("#jobDesc").val(),
-      notes: $("#notes").val() || null,
-      type_promote: type,
-      deadline: $("#deadline").val() || null,
-      amount_dealing: type === "PAID" ? parseNumber($("#amountDealing").val()) : null,
-      iu_fee: parseNumber($("#iuFee").val()),
-      admin_fee: parseNumber($("#adminFee").val()),
-      admin_fee_2: parseNumber($("#adminFee2").val()),
-      agency_fee: parseNumber($("#agencyFee").val()),
-      kol_fee: type === "PAID" ? parseNumber($("#kolFee").val()) : null,
-      brief_sow: $("#briefSow").val() || null,
-      content_link: $("#contentLink").val() || null,
-      insight_link: $("#insightLink").val() || null,
-      transfer_date: $("#transferDate").val() || null,
-      status: $("#statusSelect").val()
-    };
-
-    const id = $("#dealForm").data("id");
-
-    Swal.fire({ title: "Saving...", didOpen: () => Swal.showLoading() });
-
-    const query = id
-      ? supabase.from("deals").update(payload).eq("id", id)
-      : supabase.from("deals").insert([payload]);
-
-    const { error } = await query;
-    Swal.close();
-
-    if (error) {
-      Swal.fire("Error", error.message, "error");
-      return;
-    }
-
-    Swal.fire("Success", "Data berhasil disimpan", "success");
-    dealModal.hide();
-    loadDeals();
   });
 
   // =========================
