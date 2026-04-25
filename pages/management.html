@@ -15,7 +15,7 @@
 
         <div class="col-6 col-md-3">
             <label class="form-label">Admin</label>
-            <select id="filterKOL" class="form-select">
+            <select id="filterAdmin" class="form-select">
                 <option value="">ALL</option>
             </select>
         </div>
@@ -54,10 +54,174 @@
                     <th>Status</th>
                     <th>Type</th>
                     <th>Notes</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
 
+</div>
+
+
+<!-- ================= MODAL ADD / EDIT DEAL ================= -->
+<div class="modal fade" id="dealModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header py-2">
+        <h5 class="modal-title">Deal Form</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="dealForm">
+          <div class="row g-2">
+
+            <!-- Date Deal -->
+            <div class="col-6">
+              <label class="form-label">Date Deal *</label>
+              <input type="date" id="dealDate" class="form-control" autocomplete="off" required>
+            </div>
+
+            <!-- Brand -->
+            <div class="col-6">
+              <label class="form-label">Brand *</label>
+              <select id="brandSelect" class="form-select" required></select>
+            </div>
+
+            <!-- KOL -->
+            <div class="col-12">
+              <label class="form-label">KOL *</label>
+              <select id="kolSelect" class="form-select" required disabled></select>
+            </div>
+
+            <!-- Job Description -->
+            <div class="col-12">
+              <label class="form-label">Job Description (SOW)*</label>
+              <textarea id="jobDesc" class="form-control" autocomplete="off" rows="3" required></textarea>
+            </div>
+
+            <!-- Notes -->
+            <div class="col-12">
+              <label class="form-label">Notes</label>
+              <textarea id="notes" class="form-control" autocomplete="off" rows="3"></textarea>
+            </div>
+
+            <!-- Type Promote -->
+            <div class="col-12">
+              <label class="form-label">Type Promote *</label>
+              <div>
+                <div class="form-check form-check-inline">
+                    <input 
+                        class="form-check-input" 
+                        type="radio" 
+                        name="typePromote" 
+                        id="typePaid" 
+                        value="PAID" 
+                        checked>
+                    <label class="form-check-label" for="typePaid">
+                        Paid Promote
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input 
+                        class="form-check-input" 
+                        type="radio" 
+                        name="typePromote" 
+                        id="typeBarter" 
+                        value="BARTER">
+                    <label class="form-check-label" for="typeBarter">
+                        Barter
+                    </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deadline -->
+            <div class="col-6">
+              <label class="form-label">Deadline</label>
+              <input type="date" id="deadline" class="form-control" autocomplete="off">
+            </div>
+
+            <!-- Transfer Date -->
+            <div class="col-6">
+              <label class="form-label">Transfer Date</label>
+              <input type="date" id="transferDate" class="form-control" autocomplete="off">
+            </div>
+
+            <!-- Amount -->
+            <div class="col-6" id="amountWrapper">
+              <label class="form-label">Amount Dealing</label>
+              <input type="text" id="amountDealing" class="form-control" autocomplete="off">
+            </div>
+
+            <!-- IU Fee -->
+            <div class="col-6">
+              <label class="form-label">IU Fee</label>
+              <input type="text" id="iuFee" class="form-control" autocomplete="off">
+            </div>
+
+            <!-- Admin Fee 1 -->
+            <div class="col-6">
+              <label class="form-label">Admin Fee 1</label>
+              <input type="text" id="adminFee" class="form-control" autocomplete="off">
+            </div>
+
+            <!-- Admin Fee 2 -->
+            <div class="col-6">
+              <label class="form-label">Admin Fee 2</label>
+              <input type="text" id="adminFee2" class="form-control" autocomplete="off">
+            </div>
+
+            <!-- Agency Fee -->
+            <div class="col-6">
+              <label class="form-label">Agency Fee</label>
+              <input type="text" id="agencyFee" class="form-control" autocomplete="off">
+            </div>
+
+            <!-- KOL Fee -->
+            <div class="col-6" id="kolFeeWrapper">
+              <label class="form-label">KOL Fee</label>
+              <input type="text" id="kolFee" class="form-control" autocomplete="off" readonly>
+            </div>
+
+            <!-- Brief -->
+            <div class="col-12">
+              <label class="form-label">Brief</label>
+              <textarea id="briefSow" class="form-control" autocomplete="off" rows="3"></textarea>
+            </div>
+
+            <!-- Content Link -->
+            <div class="col-12">
+              <label class="form-label">Link Konten</label>
+              <textarea id="contentLink" class="form-control" autocomplete="off" rows="3"></textarea>
+            </div>
+
+            <!-- Insight Link -->
+            <div class="col-12">
+              <label class="form-label">Insight Konten</label>
+              <textarea id="insightLink" class="form-control" autocomplete="off" rows="3"></textarea>
+            </div>
+
+            <!-- Status -->
+            <div class="col-12">
+              <label class="form-label">Status</label>
+              <select id="statusSelect" class="form-select">
+                <option value="ON_PROGRESS">On Progress</option>
+                <option value="FINISH">Finish</option>
+              </select>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer py-2">
+        <button type="submit" form="dealForm" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+
+    </div>
+  </div>
 </div>
