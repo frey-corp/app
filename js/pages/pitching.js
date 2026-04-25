@@ -110,8 +110,51 @@ function initSelect2() {
 
   $("#brandSelect").select2({
     width: "100%",
-    dropdownParent: $("#pitchingModal")
+    dropdownParent: $("#pitchingModal"),
+    tags: true,
+    placeholder: "Pilih atau ketik brand baru"
   });
+}
+
+async function getOrCreateBrand(brandValue) {
+
+  // kalau kosong
+  if (!brandValue) return null;
+
+  // cek apakah value numeric (id dari dropdown lama)
+  if (!isNaN(brandValue)) {
+    return brandValue;
+  }
+
+  // ===== berarti ini brand baru (string) =====
+  const brandName = brandValue.trim();
+
+  // cek dulu apakah sudah ada (case insensitive)
+  const { data: existing } = await supabase
+    .from("brands")
+    .select("id")
+    .ilike("brand_name", brandName)
+    .maybeSingle();
+
+  if (existing) {
+    return existing.id;
+  }
+
+  // ===== insert brand baru =====
+  const { data: newBrand, error } = await supabase
+    .from("brands")
+    .insert({
+      brand_name: brandName,
+      is_active: 1
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return newBrand.id;
 }
 
 
@@ -317,46 +360,54 @@ async function editData(id) {
 ====================================================== */
 
 async function saveData(e) {
-
   e.preventDefault();
 
-  const id = $("#pitchingId").val();
+  try {
+    const id = $("#pitchingId").val();
 
-  const payload = {
-    brand_id: $("#brandSelect").val(),
-    kol_user_id: $("#kolSelect").val(),
-    admin_user_id: currentUser.id,
-    markom_name: $("#markomName").val(),
-    markom_phone: $("#markomPhone").val(),
+    const brandId = await getOrCreateBrand($("#brandSelect").val());
 
-    pitching_date: $("#pitchingDate").val(),
-    respon_date: $("#responDate").val() || null,
-    followup_date: $("#followupDate").val() || null,
-    deal_date: $("#dealDate").val() || null,
-    notes: $("#notes").val()
-  };
+    const payload = {
+      brand_id: brandId,
+      kol_user_id: $("#kolSelect").val(),
+      admin_user_id: currentUser.id,
+      markom_name: $("#markomName").val(),
+      markom_phone: $("#markomPhone").val(),
 
-  let result;
+      pitching_date: $("#pitchingDate").val(),
+      respon_date: $("#responDate").val() || null,
+      followup_date: $("#followupDate").val() || null,
+      deal_date: $("#dealDate").val() || null,
+      notes: $("#notes").val()
+    };
 
-  if (id) {
-    result = await supabase
-      .from("pitching_reports")
-      .update(payload)
-      .eq("id", id);
-  } else {
-    result = await supabase
-      .from("pitching_reports")
-      .insert(payload);
+    let result;
+
+    if (id) {
+      result = await supabase
+        .from("pitching_reports")
+        .update(payload)
+        .eq("id", id);
+    } else {
+      result = await supabase
+        .from("pitching_reports")
+        .insert(payload);
+    }
+
+    if (result.error) {
+      Swal.fire("Error", result.error.message, "error");
+      return;
+    }
+
+    Swal.fire("Success", "Data berhasil disimpan", "success");
+    pitchingModal.hide();
+    pitchingTable.ajax.reload();
+
+    await loadMaster();
+
+  } catch (err) {
+    Swal.fire("Error", err.message, "error");
   }
-
-  if (result.error) {
-    Swal.fire("Error", result.error.message, "error");
-    return;
-  }
-
-  Swal.fire("Success", "Data berhasil disimpan", "success");
-  pitchingModal.hide();
-  pitchingTable.ajax.reload();
 }
 
 
