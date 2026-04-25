@@ -22,9 +22,9 @@ export async function init() {
     $("#dealsTable").DataTable().ajax.reload();
   });
 
-
   dealModal = new bootstrap.Modal(document.getElementById("dealModal"));
   registerEvents();
+  
   await loadMaster();
   await loadDeals();
 }
@@ -621,118 +621,110 @@ function registerEvents() {
 }
 
 // =========================
-// PRINT INVOICE (SEMUA STATUS)
+// PDF INVOICE
 // =========================
 $(document).on("click", ".printInvoiceBtn", async function () {
-
   const id = $(this).data("id");
 
-  const { data: deal } = await supabase
-    .from("deals")
-    .select("deal_date, job_description, amount_dealing, kol_user_id, brand_id, notes")
-    .eq("id", id)
-    .single();
+  // ambil semua data sekaligus (JOIN)
+  const { data, error } = await supabase
+  .from("deals")
+  .select(`
+    id,
+    deal_date,
+    deadline,
+    job_description,
+    brief_sow,
+    notes,
+    amount_dealing,
 
-  const { data: brand } = await supabase
-    .from("brands")
-    .select("brand_name")
-    .eq("id", deal.brand_id)
-    .single();
+    brand:brands (
+      brand_name,
+      brand_addres
+    ),
 
-  const { data: kol } = await supabase
-    .from("users")
-    .select(`
+    kol:users!fk_kol_user (
       full_name,
+      username,
       instagram_account,
       tiktok_account,
       whatsapp_number,
       bank_name,
-      bank_account_number
-    `)
-    .eq("id", deal.kol_user_id)
-    .single();
+      bank_account_number,
+      alamat
+    ),
 
-  generateInvoicePDF({
-    deal_date: deal.deal_date,
-    brand: brand?.brand_name,
-    kol: kol.full_name,
-    job: deal.job_description,
-    note: deal.notes,
-    amount: deal.amount_dealing,
-    instagram: kol.instagram_account,
-    tiktok: kol.tiktok_account,
-    whatsapp: kol.whatsapp_number,
-    bank: kol.bank_name,
-    rekening: kol.bank_account_number
-  });
-});
+    admin:users!fk_admin_user (
+      full_name,
+      whatsapp_number
+    )
+  `)
+  .eq("id", id)
+  .single();
 
-// =========================
-// PDF INVOICE
-// =========================
-function generateInvoicePDF(data) {
-  const today = new Date();
-  const invoiceNo = today.toISOString().slice(0,10).replace(/-/g,"");
-  const dateText = today.toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric"
-  });
-
-  const invoice = $("#invoiceTemplate").clone().show();
-
-  invoice.find(".brand").text(data.brand);
-  invoice.find(".invoiceNo").text(invoiceNo);
-  invoice.find(".date").text(dateText);
-  invoice.find(".job").text(data.job);
-  invoice.find(".amount").text("IDR " + Number(data.amount).toLocaleString("id-ID"));
-  if (data.note && data.note.trim() !== "") {
-    invoice.find(".note-text").text(data.note);
-    invoice.find(".note-section").show();
-  } else {
-    invoice.find(".note-section").remove();
+  if (error || !data) {
+    console.error(error);
+    alert("Gagal ambil data");
+    return;
   }
-  invoice.find(".total").text(
-    "Total : IDR " + Number(data.amount).toLocaleString("id-ID")
-  );
 
-  invoice.find(".instagram").text(data.instagram);
-  invoice.find(".tiktok").text(data.tiktok);
-  invoice.find(".whatsapp").text(data.whatsapp);
-  invoice.find(".kol").text(data.kol);
-  invoice.find(".bank").text(data.bank);
-  invoice.find(".rekening").text(data.rekening);
+  // =========================
+  // GENERATE INVOICE NUMBER
+  // =========================
+  const date = new Date(data.deal_date);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
 
-  $("body").append(invoice);
+  // hitung urutan (optional, cuma buat “feel” aja)
+  const { count } = await supabase
+    .from("deals")
+    .select("*", { count: "exact", head: true })
+    .gte("deal_date", `${year}-${month}-01`)
+    .lte("deal_date", `${year}-${month}-31`);
 
-html2pdf()
-  .from(invoice[0])
-  .set({
-    margin: 0,
-    filename: `Invoice_${invoiceNo}_${data.brand}.pdf`,
+  // ambil short uuid
+  const shortId = data.id.replace(/-/g, "").slice(0, 4);
 
-    html2canvas: {
-      scale: 4,              // 🔥 PALING PENTING (2 = lumayan, 4 = super tajam)
-      dpi: 400,              // 🔥 PRINT QUALITY
-      letterRendering: true, // 🔥 teks lebih tajam
-      useCORS: true,
-      backgroundColor: null,
-      windowWidth: 794,      // A4 px
-      windowHeight: 1122
-    },
+  // final invoice
+  const invoiceNumber = `${year}${month}${shortId}`;
 
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait",
-      compressPDF: false     // 🔥 jangan dikompres
-    },
+  // =========================
+  // FORMAT DATA
+  // =========================
+  const formatRupiah = (num) =>
+    "IDR " + Number(num || 0).toLocaleString("id-ID");
 
-    pagebreak: { mode: ["avoid-all"] }
-  })
-  .save()
-  .then(() => invoice.remove());
-}
+  const params = new URLSearchParams({
+    invoice: invoiceNumber,
+    issued_date: data.deadline || "",
+
+    brand: data.brand?.brand_name || "",
+    brand_address: data.brand?.brand_addres || "",
+
+    kol: data.kol?.full_name || "",
+    kol_username: data.kol?.username || "",
+    kol_address: data.kol?.alamat || "",
+
+    description: data.job_description || "",
+
+    amount: formatRupiah(data.amount_dealing),
+
+    instagram: data.kol?.instagram_account || "",
+    tiktok: data.kol?.tiktok_account || "",
+    whatsapp: data.kol?.whatsapp_number || "",
+
+    bank: data.kol?.bank_name || "",
+    rekening: data.kol?.bank_account_number || "",
+
+    admin_name: data.admin?.full_name || "",
+    admin_wa: data.admin?.whatsapp_number || ""
+  });
+
+  // =========================
+  // OPEN PRINT PAGE
+  // =========================
+  window.open(`invoice.html?${params.toString()}`, "_blank");
+});
 
 // =========================
 // Copy Alamat
