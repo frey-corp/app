@@ -374,3 +374,4 @@ function downloadExcel() {
 
   XLSX.writeFile(wb, "Rekapan.xlsx");
 }
+
