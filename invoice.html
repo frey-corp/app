@@ -203,7 +203,7 @@ body {
 					<div id="description" class="desc-text"></div>
 				</div>
 			</td>
-            <td class="right" id="amount"></td>
+            <td class="right" id="amount" style="vertical-align: top;"></td>
         </tr>
     </tbody>
 </table>
@@ -345,7 +345,7 @@ setText("admin_wa", params.get("admin_wa"));
 // =========================
 const kolUsername = params.get("kol_username");
 if (kolUsername) {
-    document.getElementById("ttd_image").src = `assets/ttd/${kolUsername}.jpg`;
+    document.getElementById("ttd_image").src = `assets/ttd/${kolUsername}.png`;
 }
 
 // =========================
@@ -358,4 +358,3 @@ window.onload = () => {
 
 </body>
 </html>
-
