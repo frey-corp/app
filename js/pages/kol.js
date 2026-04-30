@@ -192,41 +192,44 @@ function loadDeals() {
   $(document).on("click", ".printInvoiceBtn", async function () {
     const id = $(this).data("id");
 
-    // ambil semua data sekaligus (JOIN)
+    // =========================
+    // AMBIL DATA UTAMA (JOIN)
+    // =========================
     const { data, error } = await supabase
-    .from("deals")
-    .select(`
-      id,
-      deal_date,
-      deadline,
-      job_description,
-      brief_sow,
-      notes,
-      amount_dealing,
+      .from("deals")
+      .select(`
+        id,
+        deal_date,
+        created_at,
+        deadline,
+        job_description,
+        brief_sow,
+        notes,
+        amount_dealing,
 
-      brand:brands (
-        brand_name,
-        brand_addres
-      ),
+        brand:brands (
+          brand_name,
+          brand_addres
+        ),
 
-      kol:users!fk_kol_user (
-        full_name,
-        username,
-        instagram_account,
-        tiktok_account,
-        whatsapp_number,
-        bank_name,
-        bank_account_number,
-        alamat
-      ),
+        kol:users!fk_kol_user (
+          full_name,
+          username,
+          instagram_account,
+          tiktok_account,
+          whatsapp_number,
+          bank_name,
+          bank_account_number,
+          alamat
+        ),
 
-      admin:users!fk_admin_user (
-        full_name,
-        whatsapp_number
-      )
-    `)
-    .eq("id", id)
-    .single();
+        admin:users!fk_admin_user (
+          full_name,
+          whatsapp_number
+        )
+      `)
+      .eq("id", id)
+      .single();
 
     if (error || !data) {
       console.error(error);
@@ -235,24 +238,56 @@ function loadDeals() {
     }
 
     // =========================
-    // GENERATE INVOICE NUMBER
+    // GENERATE No INV (STABLE)
     // =========================
     const date = new Date(data.deal_date);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
 
-    // hitung urutan (optional, cuma buat “feel” aja)
-    const { count } = await supabase
+    const startDate = `${year}-${month}-01`;
+
+    // bulan berikutnya (AMAN, tanpa bug tanggal)
+    const nextMonthDate = new Date(year, date.getMonth() + 1, 1);
+    const nextYear = nextMonthDate.getFullYear();
+    const nextMonth = String(nextMonthDate.getMonth() + 1).padStart(2, "0");
+
+    // ambil semua deals di bulan tsb
+    const { data: monthlyDeals, error: errDeals } = await supabase
       .from("deals")
-      .select("*", { count: "exact", head: true })
-      .gte("deal_date", `${year}-${month}-01`)
-      .lte("deal_date", `${year}-${month}-31`);
+      .select("id, deal_date, created_at")
+      .gte("deal_date", startDate)
+      .lt("deal_date", `${nextYear}-${nextMonth}-01`);
 
-    // ambil short uuid
-    const shortId = data.id.replace(/-/g, "").slice(0, 4);
+    if (errDeals || !monthlyDeals) {
+      console.error(errDeals);
+      alert("Gagal generate invoice number");
+      return;
+    }
 
-    // final invoice
-    const invoiceNumber = `${year}${month}${shortId}`;
+    // =========================
+    // SORT STABIL (WAJIB)
+    // =========================
+    monthlyDeals.sort((a, b) => {
+      if (a.deal_date !== b.deal_date) {
+        return new Date(a.deal_date) - new Date(b.deal_date);
+      }
+      if (a.created_at !== b.created_at) {
+        return new Date(a.created_at) - new Date(b.created_at);
+      }
+      return a.id.localeCompare(b.id);
+    });
+
+    // =========================
+    // CARI URUTAN
+    // =========================
+    const index = monthlyDeals.findIndex(d => d.id === data.id) + 1;
+
+    if (index === 0) {
+      alert("Data tidak ditemukan di list bulanan");
+      return;
+    }
+
+    const invoiceNumber = `INV-${year}${month}-FREY${String(index).padStart(4, "0")}`;
 
     // =========================
     // FORMAT DATA
