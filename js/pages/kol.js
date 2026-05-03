@@ -318,7 +318,7 @@ function loadDeals() {
       rekening: data.kol?.bank_account_number || "",
 
       admin_name: data.admin?.full_name || "",
-      admin_wa: data.admin?.whatsapp_number || ""
+      admin_wa: data.kol?.whatsapp_number || ""
     });
 
     // =========================
