@@ -627,6 +627,7 @@ $(document).on("click", ".printInvoiceBtn", async function () {
         instagram_account,
         tiktok_account,
         whatsapp_number,
+        whatsapp_number_admin,
         bank_name,
         bank_account_number,
         alamat
@@ -727,7 +728,7 @@ $(document).on("click", ".printInvoiceBtn", async function () {
     rekening: data.kol?.bank_account_number || "",
 
     admin_name: data.admin?.full_name || "",
-    admin_wa: data.kol?.whatsapp_number || ""
+    admin_wa: data.kol?.whatsapp_number_admin || ""
   });
 
   // =========================
