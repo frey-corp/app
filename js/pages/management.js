@@ -769,3 +769,4 @@ $(document).on("click", ".copyAlamat", function () {
     });
 
 });
+
