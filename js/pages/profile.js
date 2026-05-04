@@ -33,6 +33,7 @@ export async function init() {
   $("#instagram").val(currentUser.instagram_account || "");
   $("#tiktok").val(currentUser.tiktok_account || "");
   $("#whatsapp").val(currentUser.whatsapp_number || "");
+  $("#whatsappAdmin").val(currentUser.whatsapp_number_admin || "");
   $("#bankName").val(currentUser.bank_name || "");
   $("#bankAccount").val(currentUser.bank_account_number || "");
 
@@ -48,6 +49,7 @@ export async function init() {
       instagram_account: $("#instagram").val(),
       tiktok_account: $("#tiktok").val(),
       whatsapp_number: $("#whatsapp").val(),
+      whatsapp_number_admin: $("#whatsappAdmin").val(),
       bank_name: $("#bankName").val(),
       bank_account_number: $("#bankAccount").val(),
       updated_at: new Date()
