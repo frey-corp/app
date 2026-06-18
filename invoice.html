@@ -282,8 +282,21 @@ body::before {
 <div class="line"></div>
 
 <!-- TOTAL -->
+<div id="subtotal_section"
+     class="right total"
+     style="display:none;">
+    Subtotal:
+    <span id="amount_total"></span>
+</div>
+
+<div id="pph_section"
+     class="right total"
+     style="display:none;font-size:16px;">
+</div>
+
 <div class="right total">
-    TOTAL: <span id="amount_total"></span>
+    TOTAL:
+    <span id="grand_total"></span>
 </div>
 
 <!-- PAYMENT -->
@@ -357,7 +370,10 @@ body::before {
     ~Thank You for Collab With Us~
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
+
 // =========================
 // PARAMS
 // =========================
@@ -365,26 +381,72 @@ const params = new URLSearchParams(window.location.search);
 
 const setText = (id, val) => {
     const el = document.getElementById(id);
-    if (el) el.innerText = val || "-";
+    if (el) {
+        el.innerText = val || "-";
+    }
 };
 
 // =========================
 // FORMAT DATE
 // =========================
 const formatTanggal = (tgl) => {
+
     if (!tgl) return "-";
+
     return new Date(tgl).toLocaleDateString("id-ID", {
         day: "2-digit",
         month: "long",
         year: "numeric"
     });
+
+};
+
+// =========================
+// FORMAT RUPIAH
+// =========================
+const formatRupiah = (angka) => {
+
+    return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0
+    }).format(angka);
+
+};
+
+// =========================
+// PARSE NOMINAL
+// SUPPORT:
+// 100000
+// 100.000
+// -100000
+// -100.000
+// =========================
+const parseNominal = (value) => {
+
+    if (!value) return 0;
+
+    let str = value.toString().trim();
+
+    const isMinus = str.startsWith('-');
+
+    const angka = Number(
+        str.replace(/[^\d]/g, '')
+    ) || 0;
+
+    return isMinus ? -angka : angka;
+
 };
 
 // =========================
 // SET DATA
 // =========================
 setText("invoice", params.get("invoice"));
-setText("issued_date", formatTanggal(params.get("issued_date")));
+
+setText(
+    "issued_date",
+    formatTanggal(params.get("issued_date"))
+);
 
 setText("brand", params.get("brand"));
 setText("brand_address", params.get("brand_address"));
@@ -392,9 +454,6 @@ setText("brand_address", params.get("brand_address"));
 setText("kol_address", params.get("kol_address"));
 
 setText("description", params.get("description"));
-
-setText("amount", params.get("amount"));
-setText("amount_total", params.get("amount"));
 
 setText("bank", params.get("bank"));
 setText("rekening", params.get("rekening"));
@@ -404,7 +463,6 @@ setText("kol_name", params.get("kol"));
 
 setText("instagram", params.get("instagram"));
 setText("tiktok", params.get("tiktok"));
-setText("whatsapp", params.get("whatsapp"));
 
 setText("admin_name", params.get("admin_name"));
 setText("admin_wa", params.get("admin_wa"));
@@ -413,16 +471,111 @@ setText("admin_wa", params.get("admin_wa"));
 // TTD
 // =========================
 const kolUsername = params.get("kol_username");
+
 if (kolUsername) {
-    document.getElementById("ttd_image").src = `assets/ttd/${kolUsername}.png`;
+    document.getElementById("ttd_image").src =
+        `assets/ttd/${kolUsername}.png`;
 }
 
 // =========================
-// PRINT
+// NOMINAL INVOICE
 // =========================
-window.onload = () => {
-    window.print();
+const amountRaw = params.get("amount") || "0";
+
+const amount = parseNominal(amountRaw);
+
+// tampil subtotal
+document.getElementById("amount").innerText =
+    formatRupiah(amount);
+
+document.getElementById("amount_total").innerText =
+    formatRupiah(amount);
+
+document.getElementById("grand_total").innerText =
+    formatRupiah(amount);
+
+// =========================
+// INPUT PPH
+// =========================
+window.onload = async () => {
+
+    const result = await Swal.fire({
+        title: 'Input PPh',
+        html: `
+            <div style="text-align:left">
+                <b>Contoh:</b><br>
+                100000 = Tambah PPh<br>
+                -100000 = Kurangi PPh<br>
+                Kosong = Tanpa PPh
+            </div>
+        `,
+        input: 'text',
+        inputPlaceholder: '100000 atau -100000',
+        showCancelButton: true,
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Tanpa PPh',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    });
+
+    let pph = 0;
+
+    if (result.isConfirmed && result.value) {
+        pph = parseNominal(result.value);
+    }
+
+    let grandTotal = amount;
+
+    const subtotalSection =
+        document.getElementById("subtotal_section");
+
+    const pphSection =
+        document.getElementById("pph_section");
+
+    if (pph !== 0) {
+
+        subtotalSection.style.display = "block";
+        pphSection.style.display = "block";
+
+        if (pph > 0) {
+
+            pphSection.innerHTML = `
+                PPh (+):
+                <span id="pph_amount">
+                    ${formatRupiah(pph)}
+                </span>
+            `;
+
+        } else {
+
+            pphSection.innerHTML = `
+                PPh (-):
+                <span id="pph_amount">
+                    ${formatRupiah(Math.abs(pph))}
+                </span>
+            `;
+
+        }
+
+        grandTotal = amount + pph;
+
+    } else {
+
+        // tanpa pph, sembunyikan subtotal
+        subtotalSection.style.display = "none";
+        pphSection.style.display = "none";
+
+    }
+
+    document.getElementById("grand_total").innerText =
+        formatRupiah(grandTotal);
+
+    setTimeout(() => {
+        window.print();
+    }, 300);
+
 };
+
 </script>
 
 </body>
