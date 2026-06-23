@@ -35,116 +35,165 @@ export async function init() {
 /* ======================================================
    DATATABLE
 ====================================================== */
-
 function initDataTable() {
 
   pitchingTable = $("#pitchingTableKol").DataTable({
-    processing: true,
-    serverSide: true,
-    responsive: true,
-    searching: true,
-    ordering: false,
-    pageLength: 25,
-    lengthMenu: [10, 25, 50, 100, 500, 1000, 3000],
-    dom: 'Blfrtip',
+  processing: true,
+  serverSide: true,
+  responsive: true,
+  searching: true,
+  ordering: false,
+  pageLength: 25,
+  lengthMenu: [10, 25, 50, 100, 500, 1000, 3000],
+  dom: "Blfrtip",
 
-    ajax: async function (data, callback) {
+  ajax: async function (data, callback) {
 
-      const start = data.start;
-      const length = data.length;
-      const searchValue = data.search.value;
+    const start = data.start;
+    const length = data.length;
+    const searchValue = (data.search.value || "").toLowerCase();
 
-      let query = supabase
-        .from("pitching_reports")
-        .select(`
-          *,
-          brands(brand_name)
-        `, { count: "exact" })
-        .eq("kol_user_id", currentUser.id)
-        .order("pitching_date", { ascending: false });
+    let query = supabase
+      .from("pitching_reports")
+      .select(`
+        *,
+        brands(
+          brand_name
+        )
+      `, { count: "exact" })
+      .eq("kol_user_id", currentUser.id)
+      .order("pitching_date", { ascending: false });
 
-      // ===== FILTER TANGGAL =====
-      const from = $("#filterFrom").val();
-      const to = $("#filterTo").val();
+    // ==========================
+    // FILTER TANGGAL
+    // ==========================
+    const from = $("#filterFrom").val();
+    const to = $("#filterTo").val();
 
-      if (from) query = query.gte("pitching_date", from);
-      if (to) query = query.lte("pitching_date", to);
+    if (from) query = query.gte("pitching_date", from);
+    if (to) query = query.lte("pitching_date", to);
 
-      // ===== SEARCH =====
-      if (searchValue) {
-        query = query.or(`
-          notes.ilike.%${searchValue}%
-        `);
-      }
+    const { data: rows, count, error } = await query;
 
-      const { data: rows, count, error } = await query
-        .range(start, start + length - 1);
+    if (error) {
+      Swal.fire("Error", error.message, "error");
+      return;
+    }
 
-      if (error) {
-        Swal.fire("Error", error.message, "error");
-        return;
-      }
+    let filteredRows = rows || [];
 
-      // ===== FILTER STATUS (CLIENT SIDE) =====
-      const selectedStatus = $("#filterStatus").val();
+    // ==========================
+    // SEARCH
+    // ==========================
+    if (searchValue) {
 
-      let filteredRows = rows;
+      filteredRows = filteredRows.filter(d => {
 
-      if (selectedStatus) {
-        filteredRows = rows.filter(d => {
+        const brand = (d.brands?.brand_name || "").toLowerCase();
+        const notes = (d.notes || "").toLowerCase();
 
-          if (selectedStatus === "Deal") return !!d.deal_date;
+        let status = "pitching";
 
-          if (selectedStatus === "Follow Up")
-            return !d.deal_date && !!d.followup_date;
+        if (d.deal_date)
+          status = "deal";
+        else if (d.followup_date)
+          status = "follow up";
+        else if (d.respon_date)
+          status = "respon";
 
-          if (selectedStatus === "Respon")
-            return !d.followup_date && !!d.respon_date;
-
-          if (selectedStatus === "Pitching")
-            return !d.respon_date && !!d.pitching_date;
-
-          return true;
-        });
-      }
-
-      // ===== FORMAT DATE =====
-      const formatDate = (date) =>
-        date ? new Date(date).toLocaleDateString("id-ID") : "-";
-
-      callback({
-        draw: data.draw,
-        recordsTotal: count,
-        recordsFiltered: selectedStatus ? filteredRows.length : count,
-
-        data: filteredRows.map(d => {
-
-          // ===== STATUS BADGE =====
-          let status = `<span class="badge bg-secondary">Unknown</span>`;
-
-          if (d.deal_date)
-            status = `<span class="badge bg-success">Deal</span>`;
-          else if (d.followup_date)
-            status = `<span class="badge bg-primary">Follow Up</span>`;
-          else if (d.respon_date)
-            status = `<span class="badge bg-info text-dark">Respon</span>`;
-          else if (d.pitching_date)
-            status = `<span class="badge bg-warning text-dark">Pitching</span>`;
-
-          return [
-            d.brands?.brand_name || "",
-            status,
-
-            formatDate(d.pitching_date),
-            formatDate(d.respon_date),
-            formatDate(d.followup_date),
-            formatDate(d.deal_date),
-
-            d.notes || "-"
-          ];
-        })
+        return (
+          brand.includes(searchValue) ||
+          notes.includes(searchValue) ||
+          status.includes(searchValue)
+        );
       });
     }
+
+    // ==========================
+    // FILTER STATUS
+    // ==========================
+    const selectedStatus = $("#filterStatus").val();
+
+    if (selectedStatus) {
+
+      filteredRows = filteredRows.filter(d => {
+
+        if (selectedStatus === "Deal")
+          return !!d.deal_date;
+
+        if (selectedStatus === "Follow Up")
+          return !d.deal_date && !!d.followup_date;
+
+        if (selectedStatus === "Respon")
+          return !d.followup_date && !!d.respon_date;
+
+        if (selectedStatus === "Pitching")
+          return !d.respon_date && !!d.pitching_date;
+
+        return true;
+      });
+    }
+
+    // ==========================
+    // PAGINATION
+    // ==========================
+    const pagedRows = filteredRows.slice(
+      start,
+      start + length
+    );
+
+    // ==========================
+    // FORMAT DATE
+    // ==========================
+    const formatDate = (date) =>
+      date
+        ? new Date(date).toLocaleDateString("id-ID")
+        : "-";
+
+    callback({
+      draw: data.draw,
+      recordsTotal: count || 0,
+      recordsFiltered: filteredRows.length,
+
+      data: pagedRows.map(d => {
+
+        let status =
+          `<span class="badge bg-secondary">Unknown</span>`;
+
+        if (d.deal_date) {
+          status =
+            `<span class="badge bg-success">Deal</span>`;
+        }
+        else if (d.followup_date) {
+          status =
+            `<span class="badge bg-primary">Follow Up</span>`;
+        }
+        else if (d.respon_date) {
+          status =
+            `<span class="badge bg-info text-dark">Respon</span>`;
+        }
+        else if (d.pitching_date) {
+          status =
+            `<span class="badge bg-warning text-dark">Pitching</span>`;
+        }
+
+        return [
+          d.brands?.brand_name || "",
+          status,
+
+          formatDate(d.pitching_date),
+          formatDate(d.respon_date),
+          formatDate(d.followup_date),
+          formatDate(d.deal_date),
+
+          d.notes || "-"
+        ];
+      })
+    });
+  }
+
+
   });
 }
+
 
