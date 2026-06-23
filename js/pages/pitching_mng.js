@@ -122,59 +122,85 @@ function initDataTable() {
     searching: true,
     ordering: false,
     pageLength: 25,
-    dom: 'Blfrtip',
+    lengthMenu: [10, 25, 50, 100, 500, 1000, 3000],
+    dom: "Blfrtip",
 
     ajax: async function (data, callback) {
 
       const start = data.start;
       const length = data.length;
-      const searchValue = data.search.value;
+      const searchValue = (data.search.value || "").toLowerCase();
 
       let query = supabase
         .from("pitching_reports")
         .select(`
           *,
-          brands(brand_name),
-          kol:users!pitching_reports_kol_user_id_fkey(full_name),
-          admin:users!pitching_reports_admin_user_id_fkey(full_name)
+          brands(
+            brand_name
+          ),
+          kol:users!pitching_reports_kol_user_id_fkey(
+            full_name
+          ),
+          admin:users!pitching_reports_admin_user_id_fkey(
+            full_name
+          )
         `, { count: "exact" })
         .order("pitching_date", { ascending: false });
 
-      // ===== FILTER =====
+      // ==========================
+      // FILTER
+      // ==========================
       const from = $("#filterFrom").val();
       const to = $("#filterTo").val();
-      const kol = $("#filterKOL").val();
       const admin = $("#filterAdmin").val();
 
       if (from) query = query.gte("pitching_date", from);
       if (to) query = query.lte("pitching_date", to);
       if (admin) query = query.eq("admin_user_id", admin);
 
-      // ===== SEARCH =====
-      if (searchValue) {
-        query = query.or(`
-          markom_name.ilike.%${searchValue}%,
-          markom_phone.ilike.%${searchValue}%
-        `);
-      }
-
-      const { data: rows, count, error } = await query
-        .range(start, start + length - 1);
+      const { data: rows, count, error } = await query;
 
       if (error) {
         Swal.fire("Error", error.message, "error");
         return;
       }
 
-      // ===== FILTER STATUS (CLIENT SIDE) =====
+      let filteredRows = rows || [];
+
+      // ==========================
+      // SEARCH
+      // ==========================
+      if (searchValue) {
+
+        filteredRows = filteredRows.filter(d => {
+
+          const brand = (d.brands?.brand_name || "").toLowerCase();
+          const kolName = (d.kol?.full_name || "").toLowerCase();
+          const adminName = (d.admin?.full_name || "").toLowerCase();
+          const markomName = (d.markom_name || "").toLowerCase();
+          const markomPhone = (d.markom_phone || "").toLowerCase();
+
+          return (
+            brand.includes(searchValue) ||
+            kolName.includes(searchValue) ||
+            adminName.includes(searchValue) ||
+            markomName.includes(searchValue) ||
+            markomPhone.includes(searchValue)
+          );
+        });
+      }
+
+      // ==========================
+      // FILTER STATUS
+      // ==========================
       const selectedStatus = $("#filterStatus").val();
 
-      let filteredRows = rows;
-
       if (selectedStatus) {
-        filteredRows = rows.filter(d => {
 
-          if (selectedStatus === "Deal") return !!d.deal_date;
+        filteredRows = filteredRows.filter(d => {
+
+          if (selectedStatus === "Deal")
+            return !!d.deal_date;
 
           if (selectedStatus === "Follow Up")
             return !d.deal_date && !!d.followup_date;
@@ -189,26 +215,48 @@ function initDataTable() {
         });
       }
 
+      // ==========================
+      // PAGINATION
+      // ==========================
+      const pagedRows = filteredRows.slice(
+        start,
+        start + length
+      );
+
+      // ==========================
+      // FORMAT DATE
+      // ==========================
       const formatDate = (date) =>
-        date ? new Date(date).toLocaleDateString("id-ID") : "-";
+        date
+          ? new Date(date).toLocaleDateString("id-ID")
+          : "-";
 
       callback({
         draw: data.draw,
-        recordsTotal: count,
-        recordsFiltered: selectedStatus ? filteredRows.length : count,
+        recordsTotal: count || 0,
+        recordsFiltered: filteredRows.length,
 
-        data: filteredRows.map(d => {
+        data: pagedRows.map(d => {
 
-          let status = `<span class="badge bg-secondary">Unknown</span>`;
+          let status =
+            `<span class="badge bg-secondary">Unknown</span>`;
 
-          if (d.deal_date)
-            status = `<span class="badge bg-success">Deal</span>`;
-          else if (d.followup_date)
-            status = `<span class="badge bg-primary">Follow Up</span>`;
-          else if (d.respon_date)
-            status = `<span class="badge bg-info text-dark">Respon</span>`;
-          else if (d.pitching_date)
-            status = `<span class="badge bg-warning text-dark">Pitching</span>`;
+          if (d.deal_date) {
+            status =
+              `<span class="badge bg-success">Deal</span>`;
+          }
+          else if (d.followup_date) {
+            status =
+              `<span class="badge bg-primary">Follow Up</span>`;
+          }
+          else if (d.respon_date) {
+            status =
+              `<span class="badge bg-info text-dark">Respon</span>`;
+          }
+          else if (d.pitching_date) {
+            status =
+              `<span class="badge bg-warning text-dark">Pitching</span>`;
+          }
 
           return [
             d.brands?.brand_name || "",
@@ -226,11 +274,14 @@ function initDataTable() {
             d.notes || "-",
 
             `
-              <button class="btn btn-sm btn-warning editBtn"
+              <button
+                class="btn btn-sm btn-warning editBtn"
                 data-id="${d.id}">
                 Edit
               </button>
-              <button class="btn btn-sm btn-danger deleteBtn"
+
+              <button
+                class="btn btn-sm btn-danger deleteBtn"
                 data-id="${d.id}">
                 Delete
               </button>
@@ -239,9 +290,9 @@ function initDataTable() {
         })
       });
     }
-  });
 
-  bindTableActions();
+
+  });
 }
 
 
