@@ -47,6 +47,8 @@
                 <th>Deadline</th>
                 <th>Amount</th>
                 <th>IU Fee</th>
+                <th>Amount DP</th>
+                <th>Transfer DP Date</th>
                 <th>Admin Fee</th>
                 <th>Admin Fee 2</th>
                 <th>Agency Fee</th>
@@ -165,6 +167,18 @@
               <input type="text" id="iuFee" class="form-control" autocomplete="off">
             </div>
 
+            <!-- Amount DP -->
+            <div class="col-6">
+                <label class="form-label">Amount DP</label>
+                <input type="text" id="amountDp" class="form-control" autocomplete="off">
+            </div>
+
+            <!-- Transfer DP Date -->
+            <div class="col-6">
+                <label class="form-label">Transfer DP Date</label>
+                <input type="date" id="transferDpDate" class="form-control" autocomplete="off">
+            </div>
+
             <!-- Admin Fee 1 -->
             <div class="col-6">
               <label class="form-label">Admin Fee 1</label>
@@ -207,6 +221,51 @@
               <textarea id="insightLink" class="form-control" autocomplete="off" rows="3"></textarea>
             </div>
 
+            <hr class="my-3">
+
+            <div class="col-12">
+                <h6 class="fw-bold mb-3">
+                    Transfer DP Attachment
+                </h6>
+            </div>
+
+            <div class="col-12">
+                <input
+                    type="file"
+                    id="dpAttachments"
+                    class="form-control"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    multiple>
+                <small class="text-muted">
+                    JPG, PNG atau PDF. Bisa upload lebih dari satu file.
+                </small>
+            </div>
+
+            <div class="col-12">
+                <div id="dpAttachmentPreview" class="row g-2 mt-1"></div>
+            </div>
+
+            <hr class="my-3">
+
+            <div class="col-12">
+                <h6 class="fw-bold mb-3">
+                    Transfer Final Attachment
+                </h6>
+            </div>
+
+            <div class="col-12">
+                <input type="file" id="finalAttachments" class="form-control" accept=".jpg,.jpeg,.png,.pdf" multiple>
+                <small class="text-muted">
+                    Wajib diisi sebelum status Finish.
+                </small>
+            </div>
+
+            <div class="col-12">
+                <div id="finalAttachmentPreview" class="row g-2 mt-1"></div>
+            </div>
+
+            <hr class="my-3">
+            
             <!-- Status -->
             <div class="col-12">
               <label class="form-label">Status</label>
