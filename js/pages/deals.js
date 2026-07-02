@@ -8,6 +8,9 @@ export async function init() {
 
   currentUser = getCurrentUser();
 
+  let dpFiles = [];
+  let finalFiles = [];
+
   if (!currentUser) {
     console.warn("User belum login");
     return;
@@ -27,6 +30,497 @@ export async function init() {
   
   await loadMaster();
   await loadDeals();
+
+  $("#dpAttachments").on("change", function () {
+    dpFiles.push(...this.files);
+
+    renderAttachmentPreview(
+      dpFiles,
+      "#dpAttachmentPreview",
+      "dp"
+    );
+
+    $(this).val("");
+  });
+
+  $("#finalAttachments").on("change", function () {
+    finalFiles.push(...this.files);
+
+    renderAttachmentPreview(
+      finalFiles,
+      "#finalAttachmentPreview",
+      "final"
+    );
+
+    $(this).val("");
+  });
+  
+  $(document)
+  .off("click", ".removeAttachment")
+  .on("click", ".removeAttachment", function () {
+    const type = $(this).data("type");
+    const index = $(this).data("index");
+
+    if (type === "dp") {
+      dpFiles.splice(index, 1);
+
+      renderAttachmentPreview(
+        dpFiles,
+        "#dpAttachmentPreview",
+        "dp"
+      );
+    } else {
+      finalFiles.splice(index, 1);
+
+      renderAttachmentPreview(
+        finalFiles,
+        "#finalAttachmentPreview",
+        "final"
+      );
+    }
+  });
+
+  // =========================
+  // SAVE DEAL
+  // =========================
+  $("#dealForm").off("submit").on("submit", async function (e) {
+    e.preventDefault();
+
+    try {
+      const type = $("input[name='typePromote']:checked").val();
+      const amountDp = parseNumber($("#amountDp").val());
+
+      // =========================
+      // VALIDATION
+      // =========================
+
+      if (type === "PAID" && !parseNumber($("#amountDealing").val())) {
+        Swal.fire("Error", "Paid Promote wajib isi Amount Dealing.", "error");
+        return;
+      }
+
+      if (amountDp > 0) {
+        if (!$("#transferDpDate").val()) {
+          Swal.fire(
+            "Error",
+            "Amount DP sudah diisi, silakan isi Transfer DP Date.",
+            "error"
+          );
+          return;
+        }
+
+        if (dpFiles.length === 0 && !$("#dpAttachmentPreview").children().length) {
+          Swal.fire(
+            "Error",
+            "Amount DP sudah diisi, silakan upload Attachment Transfer DP.",
+            "error"
+          );
+          return;
+        }
+      }
+
+      if ($("#statusSelect").val() === "FINISH") {
+        if (!$("#transferDate").val()) {
+          Swal.fire(
+            "Error",
+            "Status FINISH wajib isi Tanggal Transfer.",
+            "error"
+          );
+          return;
+        }
+
+        if (finalFiles.length === 0 && !$("#finalAttachmentPreview").children().length) {
+          Swal.fire(
+            "Error",
+            "Status FINISH wajib upload Attachment Transfer Final.",
+            "error"
+          );
+          return;
+        }
+      }
+
+      const brandId = await getOrCreateBrand($("#brandSelect").val());
+
+      const payload = {
+        deal_date: $("#dealDate").val(),
+        brand_id: brandId,
+        kol_user_id: $("#kolSelect").val(),
+        admin_user_id: currentUser.id,
+        job_description: $("#jobDesc").val(),
+        notes: $("#notes").val() || null,
+        type_promote: type,
+        deadline: $("#deadline").val() || null,
+
+        amount_dealing:
+          type === "PAID"
+            ? parseNumber($("#amountDealing").val())
+            : null,
+
+        iu_fee: parseNumber($("#iuFee").val()),
+
+        amount_dp: amountDp || null,
+        transfer_dp_date: $("#transferDpDate").val() || null,
+
+        admin_fee: parseNumber($("#adminFee").val()),
+        admin_fee_2: parseNumber($("#adminFee2").val()),
+        agency_fee: parseNumber($("#agencyFee").val()),
+
+        kol_fee:
+          type === "PAID"
+            ? parseNumber($("#kolFee").val())
+            : null,
+
+        brief_sow: $("#briefSow").val() || null,
+        content_link: $("#contentLink").val() || null,
+        insight_link: $("#insightLink").val() || null,
+
+        transfer_date: $("#transferDate").val() || null,
+
+        status: $("#statusSelect").val()
+      };
+
+      const id = $("#dealForm").data("id");
+
+      Swal.fire({
+        title: "Saving...",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      // =========================
+      // INSERT / UPDATE DEAL
+      // =========================
+      let dealId = id;
+
+      if (id && dpFiles.length > 0) {
+        // Hapus semua attachment DP
+        const { data: dpOldFiles } = await supabase.storage
+          .from("attachments")
+          .list(`deals/${dealId}/dp`);
+
+        if (dpOldFiles && dpOldFiles.length > 0) {
+          await supabase.storage
+            .from("attachments")
+            .remove(
+              dpOldFiles.map(file => `deals/${dealId}/dp/${file.name}`)
+            );
+        }
+      }
+
+      if (id && finalFiles.length > 0) {
+        // Hapus semua attachment Final
+        const { data: finalOldFiles } = await supabase.storage
+          .from("attachments")
+          .list(`deals/${dealId}/final`);
+
+        if (finalOldFiles && finalOldFiles.length > 0) {
+          await supabase.storage
+            .from("attachments")
+            .remove(
+              finalOldFiles.map(file => `deals/${dealId}/final/${file.name}`)
+            );
+        }
+      }
+
+      if (id) {
+        const { error } = await supabase
+          .from("deals")
+          .update(payload)
+          .eq("id", id);
+
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from("deals")
+          .insert(payload)
+          .select("id")
+          .single();
+
+        if (error) throw error;
+
+        dealId = data.id;
+      }
+
+      // =========================
+      // UPLOAD DP ATTACHMENT
+      // =========================
+      let dpCount = 0;
+
+      for (let i = 0; i < dpFiles.length; i++) {
+        const file = dpFiles[i];
+        const ext = file.name.split(".").pop().toLowerCase();
+
+        const fileName = `dp_${String(i + 1).padStart(3, "0")}.${ext}`;
+
+        const { error } = await supabase.storage
+          .from("attachments")
+          .upload(
+            `deals/${dealId}/dp/${fileName}`,
+            file,
+            {
+              upsert: true
+            }
+          );
+
+        if (error) throw error;
+
+        dpCount++;
+      }
+
+      // =========================
+      // UPLOAD FINAL ATTACHMENT
+      // =========================
+      let finalCount = 0;
+
+      for (let i = 0; i < finalFiles.length; i++) {
+        const file = finalFiles[i];
+        const ext = file.name.split(".").pop().toLowerCase();
+
+        const fileName = `final_${String(i + 1).padStart(3, "0")}.${ext}`;
+
+        const { error } = await supabase.storage
+          .from("attachments")
+          .upload(
+            `deals/${dealId}/final/${fileName}`,
+            file,
+            {
+              upsert: true
+            }
+          );
+
+        if (error) throw error;
+
+        finalCount++;
+      }
+
+      Swal.close();
+
+      Swal.fire(
+        "Success",
+        "Data berhasil disimpan.",
+        "success"
+      );
+
+      // Reset attachment
+      dpFiles = [];
+      finalFiles = [];
+
+      $("#dpAttachments").val("");
+      $("#finalAttachments").val("");
+
+      $("#dpAttachmentPreview").empty();
+      $("#finalAttachmentPreview").empty();
+
+      dealModal.hide();
+
+      await loadMaster();
+
+      $("#dealsTable")
+        .DataTable()
+        .ajax.reload(null, false);
+
+    } catch (err) {
+      Swal.close();
+
+      Swal.fire(
+        "Error",
+        err.message,
+        "error"
+      );
+    }
+  });
+
+  async function loadAttachments(dealId, type, containerId) {
+    const container = $(containerId);
+    container.empty();
+
+    const { data: files, error } = await supabase.storage
+      .from("attachments")
+      .list(`deals/${dealId}/${type}`, {
+        limit: 100,
+        sortBy: {
+          column: "name",
+          order: "asc"
+        }
+      });
+
+    if (error || !files) return;
+
+    files.forEach(file => {
+      const ext = file.name.split(".").pop().toLowerCase();
+
+      const {
+        data: { publicUrl }
+      } = supabase.storage
+        .from("attachments")
+        .getPublicUrl(`deals/${dealId}/${type}/${file.name}`);
+
+      const imageUrl = `${publicUrl}?v=${Date.now()}`;
+
+      const preview = ["jpg", "jpeg", "png", "webp"].includes(ext)
+        ? `
+          <img
+            src="${imageUrl}"
+            class="img-fluid rounded-top"
+            style="height:140px;width:100%;object-fit:cover;">
+        `
+        : `
+          <div
+            class="d-flex justify-content-center align-items-center bg-light"
+            style="height:140px;">
+            <div class="text-center">
+              <i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+              <div class="small mt-2">PDF</div>
+            </div>
+          </div>
+        `;
+
+      container.append(`
+        <div class="col-6 col-md-3">
+          <div class="card shadow-sm h-100">
+
+            ${preview}
+
+            <div class="card-body p-2">
+
+              <div
+                class="small text-truncate"
+                title="${file.name}">
+                ${file.name}
+              </div>
+
+              <a
+                href="${imageUrl}"
+                target="_blank"
+                class="btn btn-sm btn-primary w-100 mt-2">
+                Preview
+              </a>
+
+            </div>
+
+          </div>
+        </div>
+      `);
+    });
+  }
+
+  // =========================
+  // EDIT DEAL
+  // =========================
+  $(document)
+    .off("click", ".editDealBtn")
+    .on("click", ".editDealBtn", async function () {
+      const id = $(this).data("id");
+
+      Swal.fire({
+        title: "Loading Deal...",
+        text: "Memuat data dan attachment...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      const { data } = await supabase
+        .from("deals")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      dpFiles = [];
+      finalFiles = [];
+
+      $("#dpAttachments").val("");
+      $("#finalAttachments").val("");
+
+      $("#dpAttachmentPreview").empty();
+      $("#finalAttachmentPreview").empty();
+
+      $("#dealForm").data("id", id);
+
+      $("#dealDate").val(data.deal_date);
+      $("#brandSelect").val(data.brand_id).trigger("change");
+      $("#kolSelect").val(data.kol_user_id).trigger("change");
+      $("#jobDesc").val(data.job_description);
+      $("#notes").val(data.notes);
+
+      $("input[name='typePromote'][value='" + data.type_promote + "']")
+        .prop("checked", true);
+
+      handleTypePromote();
+
+      $("#deadline").val(data.deadline);
+
+      $("#amountDealing").val(formatNumber(data.amount_dealing));
+      $("#iuFee").val(formatNumber(data.iu_fee));
+
+      // DP
+      $("#amountDp").val(formatNumber(data.amount_dp));
+      $("#transferDpDate").val(data.transfer_dp_date);
+
+      $("#adminFee").val(formatNumber(data.admin_fee));
+      $("#adminFee2").val(formatNumber(data.admin_fee_2));
+      $("#agencyFee").val(formatNumber(data.agency_fee));
+      $("#kolFee").val(formatNumber(data.kol_fee));
+
+      calculateKolFee();
+
+      $("#briefSow").val(data.brief_sow);
+      $("#contentLink").val(data.content_link);
+      $("#insightLink").val(data.insight_link);
+
+      $("#transferDate").val(data.transfer_date);
+      $("#statusSelect").val(data.status);
+
+      // Load Existing Attachment
+      await loadAttachments(
+        id,
+        "dp",
+        "#dpAttachmentPreview"
+      );
+
+      await loadAttachments(
+        id,
+        "final",
+        "#finalAttachmentPreview"
+      );
+      Swal.close(); 
+      dealModal.show();
+    });
+
+  // =========================
+  // ADD DEAL
+  // =========================
+  $("#addDealBtn").off("click").on("click", function () {
+    $("#dealForm")[0].reset();
+    $("#dealForm").removeData("id");
+    $("#dealForm").removeData("dp-count");
+    $("#dealForm").removeData("final-count");
+
+    dpFiles = [];
+    finalFiles = [];
+
+    $("#dpAttachments").val("");
+    $("#finalAttachments").val("");
+
+    $("#dpAttachmentPreview").empty();
+    $("#finalAttachmentPreview").empty();
+
+    $("#dealDate").val(today());
+    $("#statusSelect").val("ON_PROGRESS");
+
+    $("#brandSelect").val(null).trigger("change");
+    $("#kolSelect").val(null).trigger("change");
+
+    $("input[name='typePromote'][value='PAID']").prop(
+      "checked",
+      true
+    );
+
+    handleTypePromote();
+    calculateKolFee();
+
+    dealModal.show();
+  });
 }
 
 // =========================
@@ -292,17 +786,19 @@ function loadDeals() {
           4: "deadline",
           5: "amount_dealing",
           6: "iu_fee",
-          7: "admin_fee",
-          8: "admin_fee_2",
-          9: "agency_fee",
-          10: "kol_fee",
-          11: "brief_sow",
-          12: "content_link",
-          13: "insight_link",
-          14: "transfer_date",
-          15: "status",
-          16: "type_promote",
-          17: "notes"
+          7: "amount_dp",
+          8: "transfer_dp_date",
+          9: "admin_fee",
+          10: "admin_fee_2",
+          11: "agency_fee",
+          12: "kol_fee",
+          13: "brief_sow",
+          14: "content_link",
+          15: "insight_link",
+          16: "transfer_date",
+          17: "status",
+          18: "type_promote",
+          19: "notes"
         };
 
         if (columnMap[orderColIndex]) {
@@ -332,6 +828,8 @@ function loadDeals() {
           d.deadline || "",
           d.type_promote === "PAID" ? "Rp " + formatNumber(d.amount_dealing) : "-",
           d.iu_fee != null && d.iu_fee != 0 ? "Rp " + formatNumber(d.iu_fee) : "-",
+          d.amount_dp != null && d.amount_dp != 0 ? "Rp " + formatNumber(d.amount_dp) : "-",
+          d.transfer_dp_date || "",
           d.admin_fee != null && d.admin_fee != 0 ? "Rp " + formatNumber(d.admin_fee) : "-",
           d.admin_fee_2 != null && d.admin_fee_2 != 0 ? "Rp " + formatNumber(d.admin_fee_2) : "-",
           d.agency_fee != null && d.agency_fee != 0 ? "Rp " + formatNumber(d.agency_fee) : "-",
@@ -387,28 +885,6 @@ function loadDeals() {
 function registerEvents() {
 
   // =========================
-  // ADD DEAL
-  // =========================
-  $("#addDealBtn").off("click").on("click", function () {
-
-    $("#dealForm")[0].reset();
-    $("#dealForm").removeData("id");
-
-    $("#dealDate").val(today());
-    $("#statusSelect").val("ON_PROGRESS");
-    $("#brandSelect").val(null).trigger("change");
-    $("#kolSelect").val(null).trigger("change");
-
-    $("input[name='typePromote'][value='PAID']")
-      .prop("checked", true);
-
-    handleTypePromote();
-    calculateKolFee(); // ✅ tambahan
-
-    dealModal.show();
-  });
-
-  // =========================
   // TYPE PROMOTE
   // =========================
   $(document)
@@ -444,9 +920,6 @@ function registerEvents() {
       calculateKolFee();
     });
 
-  // =========================
-  // FEE INPUTS
-  // =========================
   $(document)
     .off("input", "#adminFee, #agencyFee, #adminFee2, #iuFee")
     .on("input", "#adminFee, #agencyFee, #adminFee2, #iuFee", function () {
@@ -463,121 +936,19 @@ function registerEvents() {
     });
 
   // =========================
-  // SAVE DEAL
-  // =========================
-  $("#dealForm").off("submit").on("submit", async function (e) {
-    e.preventDefault();
-
-    try {
-
-      const type = $("input[name='typePromote']:checked").val();
-
-      if (type === "PAID" && !parseNumber($("#amountDealing").val())) {
-        Swal.fire("Error", "Paid Promote wajib isi Amount Dealing", "error");
-        return;
-      }
-
-      if ($("#statusSelect").val() === "FINISH" && !$("#transferDate").val()) {
-        Swal.fire("Error", "Status FINISH wajib isi Tanggal Transfer", "error");
-        return;
-      }
-      
-      const brandId = await getOrCreateBrand($("#brandSelect").val());
-
-      const payload = {
-        deal_date: $("#dealDate").val(),
-        brand_id: brandId, 
-        kol_user_id: $("#kolSelect").val(),
-        admin_user_id: currentUser.id,
-        job_description: $("#jobDesc").val(),
-        notes: $("#notes").val() || null,
-        type_promote: type,
-        deadline: $("#deadline").val() || null,
-        amount_dealing: type === "PAID" ? parseNumber($("#amountDealing").val()) : null,
-        iu_fee: parseNumber($("#iuFee").val()),
-        admin_fee: parseNumber($("#adminFee").val()),
-        admin_fee_2: parseNumber($("#adminFee2").val()),
-        agency_fee: parseNumber($("#agencyFee").val()),
-        kol_fee: type === "PAID" ? parseNumber($("#kolFee").val()) : null,
-        brief_sow: $("#briefSow").val() || null,
-        content_link: $("#contentLink").val() || null,
-        insight_link: $("#insightLink").val() || null,
-        transfer_date: $("#transferDate").val() || null,
-        status: $("#statusSelect").val()
-      };
-
-      const id = $("#dealForm").data("id");
-
-      Swal.fire({ title: "Saving...", didOpen: () => Swal.showLoading() });
-
-      const query = id
-        ? supabase.from("deals").update(payload).eq("id", id)
-        : supabase.from("deals").insert([payload]);
-
-      const { error } = await query;
-      Swal.close();
-
-      if (error) {
-        Swal.fire("Error", error.message, "error");
-        return;
-      }
-
-      Swal.fire("Success", "Data berhasil disimpan", "success");
-      dealModal.hide();
-
-      await loadMaster(); 
-      loadDeals();
-
-    } catch (err) {
-      Swal.fire("Error", err.message, "error");
-    }
-  });
-
-  // =========================
-  // EDIT DEAL
+  // DP
   // =========================
   $(document)
-    .off("click", ".editDealBtn")
-    .on("click", ".editDealBtn", async function () {
+    .off("input", "#amountDp")
+    .on("input", "#amountDp", function () {
 
-      const id = $(this).data("id");
+      let value = $(this).val().replace(/\./g, "");
 
-      const { data } = await supabase
-        .from("deals")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      $("#dealForm").data("id", id);
-
-      $("#dealDate").val(data.deal_date);
-      $("#brandSelect").val(data.brand_id).trigger("change");
-      $("#kolSelect").val(data.kol_user_id).trigger("change");
-      $("#jobDesc").val(data.job_description);
-      $("#notes").val(data.notes);
-
-      $("input[name='typePromote'][value='" + data.type_promote + "']")
-        .prop("checked", true);
-
-      handleTypePromote();
-
-      $("#deadline").val(data.deadline);
-      $("#amountDealing").val(formatNumber(data.amount_dealing));
-      $("#iuFee").val(formatNumber(data.iu_fee));
-      $("#adminFee").val(formatNumber(data.admin_fee));
-      $("#adminFee2").val(formatNumber(data.admin_fee_2));
-      $("#agencyFee").val(formatNumber(data.agency_fee));
-      $("#kolFee").val(formatNumber(data.kol_fee));
-
-      calculateKolFee();
-
-      $("#briefSow").val(data.brief_sow);
-      $("#contentLink").val(data.content_link);
-      $("#insightLink").val(data.insight_link);
-      $("#transferDate").val(data.transfer_date);
-      $("#statusSelect").val(data.status);
-
-      dealModal.show();
+      if (!value) {
+        $(this).val("");
+      } else {
+        $(this).val(formatNumber(parseInt(value)));
+      }
     });
 
   // =========================
@@ -794,3 +1165,58 @@ $(document).on("click", ".copyAlamat", function () {
     });
 
 });
+
+function renderAttachmentPreview(files, containerId, type) {
+  const container = $(containerId);
+  container.empty();
+
+  files.forEach((file, index) => {
+    const ext = file.name.split(".").pop().toLowerCase();
+
+    const isImage = ["jpg", "jpeg", "png", "webp"].includes(ext);
+
+    const preview = isImage
+      ? `<img
+            src="${URL.createObjectURL(file)}"
+            class="img-fluid rounded-top"
+            style="height:140px;width:100%;object-fit:cover;">`
+      : `
+        <div
+          class="d-flex justify-content-center align-items-center bg-light"
+          style="height:140px;">
+            <div class="text-center">
+              <i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+              <div class="small mt-2">PDF</div>
+            </div>
+        </div>
+      `;
+
+    container.append(`
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+
+          ${preview}
+
+          <div class="card-body p-2">
+
+            <div
+              class="small text-truncate mb-2"
+              title="${file.name}">
+              ${file.name}
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-danger w-100 removeAttachment"
+              data-type="${type}"
+              data-index="${index}">
+              Remove
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+    `);
+  });
+}
