@@ -170,6 +170,22 @@
     }
 
 }
+
+/* FILTER STICKY */
+.filter-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: #fff;
+    padding: 12px 0;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+/* .filter-sticky {
+    position: sticky;
+    top: 56px;
+} */
 </style>
 
 
@@ -178,24 +194,26 @@
     <h3>Rekapan Data</h3>
 
     <!-- FILTER -->
-    <div class="row mb-3">
-        <div class="col-6 col-md-3">
-            <label class="form-label">Tahun</label>
-            <select id="filterYear" class="form-select">
-            </select>
-        </div>
-        <div class="col-6 col-md-3">
-            <label class="form-label">Status</label>
-            <select id="filterStatus" class="form-select">
-                <option value="FINISH" selected>Finish</option>
-                <option value="ON_PROGRESS">On Progress</option>
-                <option value="">ALL</option>
-            </select>
-        </div>
-        <div class="col-6 col-md-3 d-flex align-items-end mt-3 mt-md-0">
-            <button id="downloadExcel" class="btn btn-success w-100">
-                Download Excel
-            </button>
+    <div class="filter-sticky">
+        <div class="row mb-3">
+            <div class="col-4 col-md-3">
+                <label class="form-label">Tahun</label>
+                <select id="filterYear" class="form-select">
+                </select>
+            </div>
+            <div class="col-4 col-md-3">
+                <label class="form-label">Status</label>
+                <select id="filterStatus" class="form-select">
+                    <option value="FINISH" selected>Finish</option>
+                    <option value="ON_PROGRESS">On Progress</option>
+                    <option value="">ALL</option>
+                </select>
+            </div>
+            <div class="col-4 col-md-3 d-flex align-items-end mt-3 mt-md-0">
+                <button id="downloadExcel" class="btn btn-success w-100">
+                    To Excel
+                </button>
+            </div>
         </div>
     </div>
 
