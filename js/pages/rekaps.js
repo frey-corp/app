@@ -112,9 +112,11 @@ async function loadRekapanFee() {
     .from("deals_search")
     .select(`
       transfer_date,
+      transfer_dp_date,
       status,
       kol_name,
       admin_name,
+      amount_dp,
       kol_fee,
       admin_fee,
       iu_fee,
@@ -199,23 +201,33 @@ function buildRekapAmount(data) {
   renderTotalRow("#rekapAmountTotal", monthlyTotal);
 }
 
-
 // ================= BUILD KOL =================
 function buildRekapKOL(data) {
-
   let map = {};
   let monthlyTotal = initMonthArray();
 
   data.forEach(d => {
     if (!d.kol_name) return;
 
-    const m = getMonthIndex(d.transfer_date);
-    const val = Number(d.kol_fee) || 0;
+    if (!map[d.kol_name]) {
+      map[d.kol_name] = initMonthArray();
+    }
 
-    if (!map[d.kol_name]) map[d.kol_name] = initMonthArray();
+    const totalFee = Number(d.kol_fee) || 0;
+    const amountDp = Number(d.amount_dp) || 0;
+    const dpFee = amountDp * 0.8;
 
-    map[d.kol_name][m] += val;
-    monthlyTotal[m] += val;
+    if (amountDp > 0 && d.transfer_dp_date) {
+      const dpMonth = getMonthIndex(d.transfer_dp_date);
+      map[d.kol_name][dpMonth] += dpFee;
+      monthlyTotal[dpMonth] += dpFee;
+    }
+
+    const transferMonth = getMonthIndex(d.transfer_date);
+    const remainFee = totalFee - dpFee;
+
+    map[d.kol_name][transferMonth] += remainFee;
+    monthlyTotal[transferMonth] += remainFee;
   });
 
   const tbody = $("#rekapKolTable tbody");
@@ -228,23 +240,33 @@ function buildRekapKOL(data) {
   renderTotalRow("#rekapKolTotal", monthlyTotal);
 }
 
-
 // ================= BUILD ADMIN =================
 function buildRekapAdmin(data) {
-
   let map = {};
   let monthlyTotal = initMonthArray();
 
   data.forEach(d => {
-    if (!d.admin_name || d.admin_name === "Admin") return;
+    if (!d.admin_name) return;
 
-    const m = getMonthIndex(d.transfer_date);
-    const val = Number(d.admin_fee) || 0;
+    if (!map[d.admin_name]) {
+      map[d.admin_name] = initMonthArray();
+    }
 
-    if (!map[d.admin_name]) map[d.admin_name] = initMonthArray();
+    const totalFee = Number(d.admin_fee) || 0;
+    const amountDp = Number(d.amount_dp) || 0;
+    const dpFee = amountDp * 0.15;
 
-    map[d.admin_name][m] += val;
-    monthlyTotal[m] += val;
+    if (amountDp > 0 && d.transfer_dp_date) {
+      const dpMonth = getMonthIndex(d.transfer_dp_date);
+      map[d.admin_name][dpMonth] += dpFee;
+      monthlyTotal[dpMonth] += dpFee;
+    }
+
+    const transferMonth = getMonthIndex(d.transfer_date);
+    const remainFee = totalFee - dpFee;
+
+    map[d.admin_name][transferMonth] += remainFee;
+    monthlyTotal[transferMonth] += remainFee;
   });
 
   const tbody = $("#rekapAdminTable tbody");
@@ -275,16 +297,23 @@ function buildRekapIu(data) {
 
 // ================= BUILD AGENCY =================
 function buildRekapAgency(data) {
-
   let monthlyTotal = initMonthArray();
 
   data.forEach(d => {
-    const m = getMonthIndex(d.transfer_date);
-    const val = Number(d.agency_fee) || 0;
-    monthlyTotal[m] += val;
+    const totalFee = Number(d.agency_fee) || 0;
+    const amountDp = Number(d.amount_dp) || 0;
+    const dpFee = amountDp * 0.05;
+
+    if (amountDp > 0 && d.transfer_dp_date) {
+      const dpMonth = getMonthIndex(d.transfer_dp_date);
+      monthlyTotal[dpMonth] += dpFee;
+    }
+
+    const transferMonth = getMonthIndex(d.transfer_date);
+    monthlyTotal[transferMonth] += totalFee - dpFee;
   });
 
-  $("#rekapAgencyRow td:not(:first)").each(function(i){
+  $("#rekapAgencyRow td:not(:first)").each(function(i) {
     $(this).text(monthlyTotal[i] ? formatNumber(monthlyTotal[i]) : "-");
   });
 }
