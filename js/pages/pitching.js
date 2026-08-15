@@ -39,7 +39,6 @@ export async function init() {
 ====================================================== */
 
 async function loadMaster() {
-
   const { data: kolMap } = await supabase
     .from("admin_kol_mapping")
     .select(`
@@ -48,8 +47,25 @@ async function loadMaster() {
     `)
     .eq("admin_user_id", currentUser.id);
 
-  $("#kolSelect").empty().append(`<option value=""></option>`);
-  $("#filterKOL").empty().append(`<option value="">ALL</option>`);
+  if ($("#kolSelect").hasClass("select2-hidden-accessible")) {
+    $("#kolSelect").select2("destroy");
+  }
+
+  if ($("#filterKOL").hasClass("select2-hidden-accessible")) {
+    $("#filterKOL").select2("destroy");
+  }
+
+  if ($("#brandSelect").hasClass("select2-hidden-accessible")) {
+    $("#brandSelect").select2("destroy");
+  }
+
+  $("#kolSelect")
+    .empty()
+    .append(`<option value=""></option>`);
+
+  $("#filterKOL")
+    .empty()
+    .append(`<option value="">ALL</option>`);
 
   kolMap?.forEach(k => {
     if (k.kol) {
@@ -69,7 +85,9 @@ async function loadMaster() {
     .eq("is_active", 1)
     .order("brand_name");
 
-  $("#brandSelect").empty().append(`<option value=""></option>`);
+  $("#brandSelect")
+    .empty()
+    .append(`<option value=""></option>`);
 
   brands?.forEach(b => {
     $("#brandSelect").append(
@@ -83,8 +101,13 @@ async function loadMaster() {
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(today.getMonth() - 3);
 
-  $("#filterFrom").val(threeMonthsAgo.toISOString().split("T")[0]);
-  $("#filterTo").val(today.toISOString().split("T")[0]);
+  $("#filterFrom").val(
+    threeMonthsAgo.toISOString().split("T")[0]
+  );
+
+  $("#filterTo").val(
+    today.toISOString().split("T")[0]
+  );
 }
 
 
@@ -102,7 +125,8 @@ function initSelect2() {
 
   $("#kolSelect").select2({
     width: "100%",
-    dropdownParent: $("#pitchingModal")
+    dropdownParent: $("#pitchingModal"),
+    placeholder: "Pilih KOL"
   });
 
   $("#filterKOL").select2({ width: "100%" });
@@ -358,7 +382,10 @@ function bindTableActions() {
 function openInsert() {
   $("#pitchingForm")[0].reset();
   $("#pitchingId").val("");
-  $("#kolSelect, #brandSelect").val(null).trigger("change");
+
+  $("#kolSelect").val([]).trigger("change");
+  $("#brandSelect").val(null).trigger("change");
+
   pitchingModal.show();
 }
 
@@ -368,7 +395,6 @@ function openInsert() {
 ====================================================== */
 
 async function editData(id) {
-
   const { data, error } = await supabase
     .from("pitching_reports")
     .select("*")
@@ -381,8 +407,19 @@ async function editData(id) {
   }
 
   $("#pitchingId").val(data.id);
-  $("#brandSelect").val(data.brand_id).trigger("change");
-  $("#kolSelect").val(data.kol_user_id).trigger("change");
+
+  $("#kolSelect")
+    .val([])
+    .trigger("change");
+
+  $("#kolSelect")
+    .val([data.kol_user_id])
+    .trigger("change");
+
+  $("#brandSelect")
+    .val(data.brand_id)
+    .trigger("change");
+
   $("#markomName").val(data.markom_name);
   $("#markomPhone").val(data.markom_phone);
 
@@ -405,16 +442,20 @@ async function saveData(e) {
 
   try {
     const id = $("#pitchingId").val();
+    const kolIds = $("#kolSelect").val() || [];
+
+    if (kolIds.length === 0) {
+      Swal.fire("Warning", "Pilih minimal 1 KOL", "warning");
+      return;
+    }
 
     const brandId = await getOrCreateBrand($("#brandSelect").val());
 
-    const payload = {
+    const basePayload = {
       brand_id: brandId,
-      kol_user_id: $("#kolSelect").val(),
       admin_user_id: currentUser.id,
       markom_name: $("#markomName").val(),
       markom_phone: $("#markomPhone").val(),
-
       pitching_date: $("#pitchingDate").val(),
       respon_date: $("#responDate").val() || null,
       followup_date: $("#followupDate").val() || null,
@@ -425,14 +466,31 @@ async function saveData(e) {
     let result;
 
     if (id) {
+      if (kolIds.length !== 1) {
+        Swal.fire(
+          "Warning",
+          "Saat edit, hanya boleh memilih 1 KOL",
+          "warning"
+        );
+        return;
+      }
+
       result = await supabase
         .from("pitching_reports")
-        .update(payload)
+        .update({
+          ...basePayload,
+          kol_user_id: kolIds[0]
+        })
         .eq("id", id);
     } else {
+      const payloads = kolIds.map((kolId) => ({
+        ...basePayload,
+        kol_user_id: kolId
+      }));
+
       result = await supabase
         .from("pitching_reports")
-        .insert(payload);
+        .insert(payloads);
     }
 
     if (result.error) {
@@ -441,10 +499,9 @@ async function saveData(e) {
     }
 
     Swal.fire("Success", "Data berhasil disimpan", "success");
+
     pitchingModal.hide();
     pitchingTable.ajax.reload();
-
-    await loadMaster();
 
   } catch (err) {
     Swal.fire("Error", err.message, "error");
