@@ -156,14 +156,13 @@ function openUserModal(user = null) {
   $("#userModalTitle").text(user ? "Edit User" : "Add User");
 
   // Default untuk add
-  $("#username").prop("disabled", false);
   $("#password").prop("required", true);
   $("#role").val(2);       // default Admin
   $("#isActive").val(1);   // default Active
 
   if (user) {
     $("#userId").val(user.id);
-    $("#username").val(user.username).prop("disabled", true);
+    $("#username").val(user.username);
     $("#password").val(user.password_hash).prop("required", false);
     $("#fullName").val(user.full_name);
     $("#role").val(user.role);
